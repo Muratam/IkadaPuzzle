@@ -14,6 +14,8 @@ public class IkadaManager : TileManager {
 	[SerializeField] GameObject FrameTile;
 	protected GameObject gocamera;
 	protected FloatingWater flWater;
+	protected LerpMove lmPlayer;
+
 	bool isPlayerView = false;
 	static Pair<Vector3>[] CameraPosAng = new Pair<Vector3>[] {
 		new Pair<Vector3>(new Vector3(-0.2f,9.5f,-0.3f),new Vector3(90,270,0)),
@@ -27,12 +29,13 @@ public class IkadaManager : TileManager {
 		if (n == 2) {
 			move.SetParent(Player.transform);
 			isPlayerView = true;
+			move.LocalRotation = Quaternion.Euler(CameraPosAng[n].y);
 		} else {
 			move.SetParent(null);
 			isPlayerView = false;
+			move.LocalRotation = Quaternion.Euler(CameraPosAng[n].y);
 		}
-		move.Position = CameraPosAng[n].x;
-		move.Rotation = Quaternion.Euler(CameraPosAng[n].y);
+		move.LocalPosition = CameraPosAng[n].x;
 	}
 	protected void SetLighting() {
 		float intensity = 1f - (float)CurrentStageIndex / StageMax + 0.1f;
@@ -40,9 +43,31 @@ public class IkadaManager : TileManager {
 		GameObject.Find("Directional light").GetComponent<Light>().intensity = intensity;
 	}
 
+	static readonly Vector3 DisFloatDiffVec = new Vector3(0,-0.5f,0);
+	protected void AfloatTiles(Queue<Vec2> _pos,GameObject _go,float _LerpTime= 0.15f,Vector3 DiffVec = new Vector3()) {
+		if (_pos.Count == 0) return;
+		var pos = _pos.Dequeue();
+		var lm = (Instantiate(_go, GetPositionFromPuzzlePosition(pos.x, pos.y) + DisFloatDiffVec + DiffVec, new Quaternion()) as GameObject).AddComponent<LerpMove>();
+		lm.transform.SetParent(Stage.transform);
+		lm.Position = GetPositionFromPuzzlePosition(pos.x, pos.y) + DiffVec;
+		lm.LerpTime = _LerpTime;
+		lm.AddSelfAction((_lm) => { 
+			AfloatTiles(_pos, _go,_LerpTime,DiffVec);
+		});
+		AfloatedTiles.Enqueue(lm);
+	}
+	protected Queue<LerpMove> AfloatedTiles = new Queue<LerpMove>();
+	protected void DisfloatTiles() {
+		foreach (var lm in AfloatedTiles) {
+			lm.LocalPosition = lm.transform.localPosition + DisFloatDiffVec;
+			lm.AddSelfAction((_lm)=> Destroy(_lm.gameObject));
+		}
+		AfloatedTiles.Clear();
+	}
 
 	protected virtual void Awake () {
 		Player = GameObject.Find("Player");
+		lmPlayer = Player.GetComponent<LerpMove>();
 		gocamera = GameObject.Find("Main Camera");
 		flWater = GameObject.Find("Water").GetComponent<FloatingWater>();
 		GameObject.Find("ToEditor").GetComponent<Button>().onClick.AddListener(() => { Application.LoadLevel("StageEdit"); });
@@ -53,8 +78,6 @@ public class IkadaManager : TileManager {
 		InitTiles(BaseStageName);
 		Player.transform.SetParent(flWater.transform);
 		Stage.transform.SetParent(flWater.transform);
-		DestPlayerPosition = Player.transform.position;
-		DestPlayerEuler =  Player.transform.rotation.eulerAngles;		
 	}
 	protected virtual void Start() { }
 	protected override int tileSize { get { return 1; } } //120
@@ -70,14 +93,17 @@ public class IkadaManager : TileManager {
 		var tmp = Tiles[x1, y1];
 		Tiles[x1, y1] = Tiles[x2, y2];
 		Tiles[x2, y2] = tmp;
-		var goWave1 = Instantiate(Wave, Tiles[x1, y1].transform.position + new Vector3(0, 0.5f,0), Quaternion.Euler(270,0,0)) as GameObject;
-		var goWave2 = Instantiate(Wave, Tiles[x2, y2].transform.position + new Vector3(0, 0.5f, 0), Quaternion.Euler(270, 0, 0)) as GameObject;
-		goWave1.transform.SetParent(Tiles[x1,y1].transform);
-		goWave2.transform.SetParent(Tiles[x2, y2].transform);
-		MovedTileList.Add(new Vec2(x1, y1));
-		MovedTileList.Add(new Vec2(x2, y2));
+		Action<int, int> MoveTileProcess = (x, y) => {
+			var goWave = Instantiate(Wave, Tiles[x, y].transform.position + new Vector3(0, 0.5f, 0), Quaternion.Euler(270, 0, 0)) as GameObject;
+			goWave.transform.SetParent(Tiles[x, y].transform);
+			var lm = Tiles[x, y].GetComponent<LerpMove>() ? Tiles[x, y].GetComponent<LerpMove>() : Tiles[x, y].gameObject.AddComponent<LerpMove>();
+			lm.LerpTime = lmPlayer.LerpTime;
+			lm.Position = GetPositionFromPuzzlePosition(x, y);
+			lm.DestroyWhenFinished = true;
+		};
+		MoveTileProcess(x1,y1);
+		MoveTileProcess(x2,y2);
 	}
-	List<Vec2> MovedTileList = new List<Vec2>();
 
 
 	bool FrameMade = false;
@@ -127,33 +153,28 @@ public class IkadaManager : TileManager {
 			});
 		});
 		px = w - 1; py = h - 1;
+		px += 8;
 		SetLighting();
-		DestPlayerPosition = Player.transform.position = GetPositionFromPuzzlePosition(px, py);
-	}
-	protected Vector3 Lerp(Vector3 Base, Vector3 Dest, float Per) {
-		return Base * (1-Per) + Dest *  Per;
+		lmPlayer.Position = Player.transform.position =  GetPositionFromPuzzlePosition(px, py);
+		lmPlayer.Rotate = new Vector3(0,90 * prePlayerDirection.GetDiffOrderByLBRT(new Across(false, true, false, false, false)), 0);
+		prePlayerDirection = new Across(false, true, false, false, false);
+		isComingPlayer = true;
+		Queue<Vec2> pos = new Queue<Vec2>();
+		REP(8, i => pos.Enqueue(new Vec2(px-i, py)));
+		AfloatTiles(pos, FloorTile.gameObject,0.3f);
+		SetCamera(2);
+		WaitTime = Time.time;
 	}
 
-	protected const float LerpTime = 0.3f;
-	protected float LerpingTime = LerpTime;
-	protected Vector3 DestPlayerPosition ;
-	protected Vector3 DestPlayerEuler;
-	Across prePlayerDirection = new Across(false,false,false,true,false);
+	Across prePlayerDirection = new Across(false,true,false,false,false);
 	protected virtual void MovePlayer() {
-		LerpingTime += Time.deltaTime;
-		if (LerpingTime < LerpTime) {
-			float per = LerpingTime / LerpTime;
-			Player.transform.position = Lerp(Player.transform.position, DestPlayerPosition, per);
-			Player.transform.rotation = Quaternion.Euler(Lerp(Player.transform.rotation.eulerAngles, DestPlayerEuler, per));
-			foreach(var v in MovedTileList)
-				Tiles[v.x, v.y].transform.position = Lerp(Tiles[v.x,v.y].transform.position,GetPositionFromPuzzlePosition(v.x,v.y),per);
-		} else {
+		if (lmPlayer.LerpFinished) {
 			int dx = Input.GetKey(KeyCode.RightArrow) ? 1 :
 					 Input.GetKey(KeyCode.LeftArrow) ? -1 : 0;
 			int dy = Input.GetKey(KeyCode.UpArrow) ? 1 :
 					 Input.GetKey(KeyCode.DownArrow) ? -1 : 0;
 			if (dx == 0 && dy == 0) return;
-			LerpingTime = 0f;
+			int inx = dx, iny = dy;
 			if (isPlayerView) {
 				if (prePlayerDirection.Horizontal != 0) {
 					int ddy = dy;
@@ -166,38 +187,75 @@ public class IkadaManager : TileManager {
 
 			//0 R 90 B 180 L 270 T 
 			Across playerDirection = new Across(dx == 1, dx == -1, dy == 1, dy == -1, false);
-			int Angle = playerDirection.R ? 0 : playerDirection.B ? 90 : playerDirection.L ? 180 : 270;
-			if (Player.transform.rotation.eulerAngles.y > 350) Player.transform.rotation = Quaternion.Euler(0, 0, 0);
-			if (prePlayerDirection.R && playerDirection.T) Player.transform.rotation = Quaternion.Euler(0,358,0);
-			else if (prePlayerDirection.T && playerDirection.R) Angle = 358;
-			DestPlayerEuler = new Vector3(0, Angle, 0);
 			if (isPlayerView && !(playerDirection & prePlayerDirection).HaveDirection) {
 				prePlayerDirection = playerDirection;
+				int Angle = inx == 1 ? 90 : inx == - 1 ? -90 :180 ; 
+				lmPlayer.Rotate = new Vector3(0, Angle, 0);
 				return;
+			}else{
+				int Angle = prePlayerDirection.GetDiffOrderByLBRT(playerDirection) * 90;
+				if (Angle == 270) Angle = -90; else if (Angle == -270) Angle = 90;
+				lmPlayer.Rotate = new Vector3(0, Angle, 0);
 			}
 			prePlayerDirection = playerDirection;
-			
-			MovedTileList.Clear();
 			MoveCharacters(dx,dy);
-			DestPlayerPosition =  GetPositionFromPuzzlePosition(px, py);
-			DestPlayerPosition += tileSize * 0.36f * new Vector3(
-				-1 * (PlayerTilePos.T ? 1 : PlayerTilePos.B ? -1 : 0),0,
+			lmPlayer.Position = GetPositionFromPuzzlePosition(px, py)
+				+ tileSize * 0.36f * new Vector3(-1 * (PlayerTilePos.T ? 1 : PlayerTilePos.B ? -1 : 0),0,
 				PlayerTilePos.R ? 1 : PlayerTilePos.L ? -1 : 0);
 		}
 	}
-
-	protected virtual void Update() {
-		MovePlayer();
-		DestPlayerPosition.y = flWater.GetLocalFloating();
-		if (Input.GetKeyDown(KeyCode.R)) InitTiles(BaseStageName);
-		else if (Input.GetKeyDown(KeyCode.N) ||
-			px == 0 && Tiles[px,py].tile.tileType == Tile.TileType.Normal) {
-			CurrentStageIndex++; InitTiles(BaseStageName);
+	bool isComingPlayer = true;
+	bool isGoaled = false;
+	float WaitTime;
+	void ComePlayer() {
+		if (Time.time - WaitTime < 1f) return;
+		if (lmPlayer.LerpFinished) {
+			px--;
+			lmPlayer.Position = GetPositionFromPuzzlePosition(px, py);
+			if (px == w - 1) {
+				isComingPlayer = false;
+				SetCamera(1);
+				DisfloatTiles();
+			}
 		}
-		else if (Input.GetKeyDown(KeyCode.B)) {
-			CurrentStageIndex--; InitTiles(BaseStageName);
-		} else if (Input.GetKeyDown(KeyCode.Escape)) {
-			Application.LoadLevel("StageSelect");
+	}
+	void GoaledPlayer() {
+		if (Time.time - WaitTime < 1f) return;
+		if (lmPlayer.LerpFinished) {
+			px--;
+			lmPlayer.Position = GetPositionFromPuzzlePosition(px, py);
+			if (px == -8) {
+				DisfloatTiles();
+				isGoaled = false;
+				CurrentStageIndex++; InitTiles(BaseStageName);
+			}
+		}	
+	}
+	
+	protected virtual void Update() {
+		if (isComingPlayer) {
+			ComePlayer();
+		}else if(isGoaled){
+			GoaledPlayer();
+		} else {
+			MovePlayer();
+			if (Input.GetKeyDown(KeyCode.R)) InitTiles(BaseStageName);
+			else if (Input.GetKeyDown(KeyCode.N)) {
+				CurrentStageIndex++; InitTiles(BaseStageName);
+			} else if (Input.GetKeyDown(KeyCode.B)) {
+				CurrentStageIndex--; InitTiles(BaseStageName);
+			} else if (Input.GetKeyDown(KeyCode.Escape)) {
+				Application.LoadLevel("StageSelect");
+			} else if (lmPlayer.LerpFinished && px == 0 && Tiles[px, py].tile.tileType == Tile.TileType.Normal) {
+				WaitTime = Time.time;
+				isGoaled = true;
+				lmPlayer.Rotate = new Vector3(0, 90 * prePlayerDirection.GetDiffOrderByLBRT(new Across(false, true, false, false, false)), 0);
+				prePlayerDirection = new Across(false, true, false, false, false);
+				Queue<Vec2> pos = new Queue<Vec2>();
+				REP(20, i => pos.Enqueue(new Vec2(px - i, py)));
+				AfloatTiles(pos, FloorTile.gameObject, 0.3f);
+				SetCamera(2);
+			}
 		}
 	}
 }

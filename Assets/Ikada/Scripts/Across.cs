@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System;
 
 public class Across  {
     public readonly bool[,] Mat = new bool[3, 3];
@@ -8,6 +8,10 @@ public class Across  {
     public bool C { get { return Mat[1, 1]; } set { Mat[1, 1] = value; } }
     public bool R { get { return Mat[2, 1]; } set { Mat[2, 1] = value; } }
     public bool B { get { return Mat[1, 2]; } set { Mat[1, 2] = value; } }
+	public int GetDiffOrderByLBRT(Across across) {
+		Func<Across,int> Order = (ac)=>ac.L ? 0 : ac.B ? 1 : ac.R ? 2 : 3;
+		return Order(this) - Order(across);
+	}
     public int Vertical {
         get {
             if (T & !B) return 1;
