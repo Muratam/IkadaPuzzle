@@ -8,18 +8,18 @@ using MiniJSON;
 /// ステージ通信マネージャー
 /// </summary>
 
-public class WWWManager : MonoBehaviour {
+public class WWWManager {
 
-    public IEnumerator RegisterStage(Action<bool> callback, string stage, string stageName, int userId = -1) {
+    public IEnumerator RegisterStage(Action<bool> callback, string stage, int userId = -1, string stageName = null) {
 
-        string url = "http://hogera.sakura.ne.jp/muratam/ikadapuzzle/ikada.php";
+        string url = "http://hogera.sakura.ne.jp/ikada_puzzle/ikada.php";
 
         WWWForm wwwForm = new WWWForm();
 
         wwwForm.AddField("keyword", "RegisterStage");
         wwwForm.AddField("stage", stage);
-        wwwForm.AddField("stage_name", stageName);
         if (userId != -1) wwwForm.AddField("user_id", userId);
+        if (stageName != null) wwwForm.AddField("stage_name", stageName);
 
         WWW www = new WWW(url, wwwForm);
 
@@ -31,9 +31,6 @@ public class WWWManager : MonoBehaviour {
             yield break;
         } else if (!www.isDone) {
             Debug.LogWarning("WWWERROR: " + "UNDONE");
-            callback(false);
-            yield break;
-        }else if (www.text == null) {
             callback(false);
             yield break;
 
