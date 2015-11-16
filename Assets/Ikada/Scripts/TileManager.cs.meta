@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: f04d2dd7e33ba51479ee98a22a76da70
+timeCreated: 1445907919
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - NormalTile: {fileID: 11443264, guid: 43bbbce3e4deb3c458eb1bb9e94735f6, type: 2}
+  - Stage: {fileID: 186832, guid: 03a74b75e710c3b48854f13dd60fea99, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

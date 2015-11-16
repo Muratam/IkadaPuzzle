@@ -1,0 +1,64 @@
+Initialize engine version: 5.1.1f1 (2046fc06d4d8)
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.0]
+    Renderer: Intel(R) HD Graphics (ID=0xf31)
+    Vendor:   Intel
+    VRAM:     128 MB
+Begin MonoManager ReloadAssembly
+Platform assembly: C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\Assembly-CSharp-firstpass.dll (this message is harmless)
+Loading C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\Assembly-CSharp-firstpass.dll into Unity Child Domain
+Platform assembly: C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
+Loading C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
+Platform assembly: C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\UnityEngine.Analytics.dll (this message is harmless)
+Loading C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\UnityEngine.Analytics.dll into Unity Child Domain
+- Completed reload, in  0.353 seconds
+desktop: 1366x768 59Hz; virtual: 1366x768 at 0,0
+<RI> Initializing input.
+<RI> Input initialized.
+<RI> Initialized touch support.
+Platform assembly: C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: C:\Users\3104\Documents\Unity\IkadaPuzzle\IkadaExe\Ikada_Data\Managed\System.dll (this message is harmless)
+Shader 'Custom/Toon72': fallback shader 'Toon/Basic' not found
+Unloading 3 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 10.819098 ms
+
+Unloading 19 unused Assets to reduce memory usage. Loaded Objects now: 1303.
+Total: 1.764271 ms (FindLiveObjects: 0.278370 ms CreateObjectMapping: 0.077981 ms MarkObjects: 0.750039 ms  DeleteObjects: 0.655989 ms)
+
+Unloading 1 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 5.293758 ms
+
+Unloading 86 unused Assets to reduce memory usage. Loaded Objects now: 783.
+Total: 1.438639 ms (FindLiveObjects: 0.216930 ms CreateObjectMapping: 0.056241 ms MarkObjects: 0.408339 ms  DeleteObjects: 0.755711 ms)
+
+Unloading 2 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 1.093630 ms
+
+Unloading 18 unused Assets to reduce memory usage. Loaded Objects now: 1303.
+Total: 1.642809 ms (FindLiveObjects: 0.210786 ms CreateObjectMapping: 0.056241 ms MarkObjects: 0.723100 ms  DeleteObjects: 0.650790 ms)
+
+Unloading 2 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 4.165626 ms
+
+Unloading 122 unused Assets to reduce memory usage. Loaded Objects now: 1040.
+Total: 3.476081 ms (FindLiveObjects: 0.182901 ms CreateObjectMapping: 0.062385 ms MarkObjects: 1.875335 ms  DeleteObjects: 1.353096 ms)
+
+Unloading 2 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 10.075202 ms
+
+Unloading 96 unused Assets to reduce memory usage. Loaded Objects now: 1305.
+Total: 2.013339 ms (FindLiveObjects: 0.213621 ms CreateObjectMapping: 0.060967 ms MarkObjects: 0.727354 ms  DeleteObjects: 1.010450 ms)
+
+Unloading 1 Unused Serialized files (Serialized files now loaded: 0)
+UnloadTime: 34.477722 ms
+
+Unloading 88 unused Assets to reduce memory usage. Loaded Objects now: 783.
+Total: 2.296907 ms (FindLiveObjects: 0.140366 ms CreateObjectMapping: 0.055768 ms MarkObjects: 0.483484 ms  DeleteObjects: 1.615870 ms)
+

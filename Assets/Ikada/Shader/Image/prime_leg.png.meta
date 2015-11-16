@@ -1,0 +1,209 @@
+fileFormatVersion: 2
+guid: 207de3455b3c84b42bc3a2f7a282b2de
+timeCreated: 1444498636
+licenseType: Free
+TextureImporter:
+  fileIDToRecycleName:
+    21300000: prime_leg_0
+    21300002: prime_leg_1
+    21300004: prime_leg_2
+    21300006: prime_leg_3
+    21300008: prime_leg_4
+    21300010: prime_leg_5
+    21300012: prime_leg_6
+    21300014: prime_leg_7
+    21300016: prime_leg_8
+    21300018: prime_leg_9
+    21300020: prime_leg_10
+    21300022: prime_leg_11
+    21300024: prime_leg_12
+    21300026: prime_leg_13
+  serializedVersion: 2
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    linearTexture: 0
+    correctGamma: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: .25
+    normalMapFilter: 0
+  isReadable: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 0
+  cubemapConvolution: 0
+  cubemapConvolutionSteps: 8
+  cubemapConvolutionExponent: 1.5
+  seamlessCubemap: 0
+  textureFormat: -1
+  maxTextureSize: 2048
+  textureSettings:
+    filterMode: -1
+    aniso: 16
+    mipBias: -1
+    wrapMode: 1
+  nPOTScale: 0
+  lightmap: 0
+  rGBM: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: .5, y: .5}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 100
+  alphaIsTransparency: 1
+  textureType: 8
+  buildTargetSettings: []
+  spriteSheet:
+    sprites:
+    - name: prime_leg_0
+      rect:
+        serializedVersion: 2
+        x: 73
+        y: 512
+        width: 100
+        height: 137
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: prime_leg_1
+      rect:
+        serializedVersion: 2
+        x: 194
+        y: 450
+        width: 81
+        height: 173
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: prime_leg_2
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 301
+        width: 180
+        height: 125
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: prime_leg_3
+      rect:
+        serializedVersion: 2
+        x: 715
+        y: 563
+        width: 92
+        height: 104
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: prime_leg_4
+      rect:
+        serializedVersion: 2
+        x: 699
+        y: 438
+        width: 98
+        height: 102
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: prime_leg_5
+      rect:
+        serializedVersion: 2
+        x: 574
+        y: 371
+        width: 113
+        height: 118
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: prime_leg_6
+      rect:
+        serializedVersion: 2
+        x: 197
+        y: 0
+        width: 137
+        height: 71
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: prime_leg_7
+      rect:
+        serializedVersion: 2
+        x: 219
+        y: 95
+        width: 106
+        height: 151
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: prime_leg_8
+      rect:
+        serializedVersion: 2
+        x: 338
+        y: 44
+        width: 142
+        height: 154
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: prime_leg_9
+      rect:
+        serializedVersion: 2
+        x: 328
+        y: 219
+        width: 252
+        height: 168
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: prime_leg_10
+      rect:
+        serializedVersion: 2
+        x: 313
+        y: 386
+        width: 211
+        height: 195
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: prime_leg_11
+      rect:
+        serializedVersion: 2
+        x: 649
+        y: 31
+        width: 148
+        height: 90
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: prime_leg_12
+      rect:
+        serializedVersion: 2
+        x: 726
+        y: 138
+        width: 148
+        height: 163
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: prime_leg_13
+      rect:
+        serializedVersion: 2
+        x: 583
+        y: 170
+        width: 122
+        height: 104
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+  spritePackingTag: 
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
