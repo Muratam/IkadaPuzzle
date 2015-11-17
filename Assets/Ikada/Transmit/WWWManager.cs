@@ -10,9 +10,9 @@ using MiniJSON;
 
 public class WWWManager : MonoBehaviour {
 
-    public IEnumerator RegisterStage(Action<bool> callback, string stage, string stageName, int userId = -1) {
+    private string url = "http://hogera.sakura.ne.jp/muratam/ikadapuzzle/ikada.php";
 
-        string url = "http://hogera.sakura.ne.jp/muratam/ikadapuzzle/ikada.php";
+    public IEnumerator RegisterStage(Action<bool> callback, string stage, string stageName, int userId = -1) {
 
         WWWForm wwwForm = new WWWForm();
 
@@ -25,47 +25,75 @@ public class WWWManager : MonoBehaviour {
 
         yield return www;
 
-        if (www.error != null) {
-            Debug.LogWarning("WWWERROR: " + www.error);
-            callback(false);
-            yield break;
-        } else if (!www.isDone) {
-            Debug.LogWarning("WWWERROR: " + "UNDONE");
-            callback(false);
-            yield break;
-        }else if (www.text == null) {
+        var result = ParseJson(www);   
+
+        if (result == null || !(result is Dictionary<string, object>)) {
             callback(false);
             yield break;
 
         } else {
+            var resultDictionary = (Dictionary<string, object>)result;
 
-            var result = ParseJson(www.text);
-
-            if (result == null || !(result is Dictionary<string, object>)) {
-                callback(false);
+            if (resultDictionary.ContainsKey("result") && (string)resultDictionary["result"] == "ok") {
+                callback(true);
                 yield break;
 
             } else {
-                var resultDictionary = (Dictionary<string, object>)result;
+                callback(false);
+                yield break;
+            }
+        } 
 
-                if (resultDictionary.ContainsKey("result") && (string)resultDictionary["result"] == "ok") {
-                    callback(true);
-                    yield break;
-
-                } else {
-                    callback(false);
-                    yield break;
-                }
-            } 
-
-        }
     }
 
-    private object ParseJson(string wwwText) {
+    public IEnumerator GetAllStage(Action<Dictionary<string, object>> callback) {
+
+        WWWForm wwwForm = new WWWForm();
+
+        wwwForm.AddField("keyword", "GetAllStage");
+
+        WWW www = new WWW(url, wwwForm);
+        yield return www;
+
+        var result = ParseJson(www);
+
+        if (result == null || !(result is Dictionary<string, object>)) {
+            callback(null);
+            yield break;
+
+        } else {
+            var resultDictionary = (Dictionary<string, object>)result;
+
+            if (resultDictionary.ContainsKey("result") && (string)resultDictionary["result"] == "ok") {
+                callback(resultDictionary);
+                yield break;
+
+            } else {
+                callback(null);
+                yield break;
+            }
+        }
+
+    }
+
+    //エラーチェックとパース
+    private object ParseJson(WWW www) {
+
+        if (www.error != null) {
+            Debug.LogWarning("WWWERROR: " + www.error);
+            return null;
+        } else if (!www.isDone) {
+            Debug.LogWarning("WWWERROR: " + "UNDONE");
+            return null;
+        } else if (www.text == null) {
+            return null;
+
+        } 
+
 
         //Jsonから通信結果とエラー情報の取得//////////////////////////////////////
-        Debug.Log(wwwText); //DEBUG: wwwの内容一覧表示
-        var json = Json.Deserialize(wwwText) as Dictionary<string, object>;
+        Debug.Log(www.text); //DEBUG: wwwの内容一覧表示
+        var json = Json.Deserialize(www.text) as Dictionary<string, object>;
 
         var error = (List<object>)json["error"];
         foreach (string tmp in error) {
