@@ -75,6 +75,43 @@ public class WWWManager : MonoBehaviour {
         }
 
     }
+    public IEnumerator DeleteStage(Action<int> callback, string stageName, int stageId = -1) {
+
+        WWWForm wwwForm = new WWWForm();
+
+        wwwForm.AddField("keyword", "DeleteStage");
+        if (stageName != "") wwwForm.AddField("stage_name", stageName);
+        if (stageId != -1) wwwForm.AddField("id", stageId);
+        //stage_nameとidを両方指定した場合は、idで削除するステージを検索します
+
+        WWW www = new WWW(url, wwwForm);
+        yield return www;
+
+        var result = ParseJson(www);
+
+        if (result == null || !(result is Dictionary<string, object>)) {
+            callback(-1);
+            yield break;
+
+        } else {
+            var resultDictionary = (Dictionary<string, object>)result;
+
+            if (resultDictionary.ContainsKey("result") && (string)resultDictionary["result"] == "ok") {
+                if (resultDictionary.ContainsKey("delete_count")) {
+                    callback((int)(long)resultDictionary["delete_count"]);
+                    yield break;
+                } else {
+                    callback(-1);
+                    yield break;
+                }
+
+            } else {
+                callback(-1);
+                yield break;
+            }
+        }
+
+    }
 
     //エラーチェックとパース
     private object ParseJson(WWW www) {

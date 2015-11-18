@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public class Sample : MonoBehaviour {
     public Button button1;
     public Button button2;
-
+    public Button button3;
 
     // Use this for initialization
     void Start () {
@@ -50,6 +50,19 @@ public class Sample : MonoBehaviour {
                 }
 
             }));
+        });
+
+        button3.onClick.AddListener(() => {
+            StartCoroutine(GameObject.FindObjectOfType<WWWManager>().DeleteStage(delete_count => {
+
+                //通信処理の成否を受け取る任意の処理 -1...何らかの失敗 0...該当行なし 1...削除成功
+                if (delete_count != -1) {
+                    Debug.Log("削除行数：" + delete_count.ToString());
+                } else {
+                    Debug.Log("失敗しましたあ");
+                }
+
+            }, "stagename01"));
         });
 
     }
