@@ -21,7 +21,7 @@ public class Sample : MonoBehaviour {
                     Debug.Log("失敗しましたあ");
                 }
 
-            }, "stagedata01", "stagename01"));
+            }, "[] [] [] [] .. .. []", "test"));
         });
 
         button2.onClick.AddListener(() => {

@@ -27,6 +27,12 @@ public class LerpMove : MonoBehaviour {
 	public void AddSelfAction(Action<LerpMove> action) {
 		selfActions.Enqueue(action);
 	}
+	public void ClearSelfActions() {
+		selfActions.Clear();
+	}
+	public void ClearActions() {
+		actions.Clear();
+	}
 	Queue<Action> actions = new Queue<Action>();
 	Queue<Action<LerpMove>> selfActions = new Queue<Action<LerpMove>>();
 
@@ -41,9 +47,8 @@ public class LerpMove : MonoBehaviour {
 	Quaternion DestLocalRotation;
 	public float LerpTime = 3f;
 	float LerpingTime = 0;
-	bool lerpFinished = true;
 	public bool DestroyWhenFinished = false;
-	public bool LerpFinished { get { return lerpFinished; } private set { lerpFinished = value; } }
+	public bool LerpFinished { get; private set ; }
 	Vector3 Lerp(Vector3 Base, Vector3 Dest, float Per) {
 		return Base * (1 - Per) + Dest * Per;
 	}

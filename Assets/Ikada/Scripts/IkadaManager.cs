@@ -11,11 +11,21 @@ public struct Pair<T> { public T x, y; public Pair(T _x, T _y) { x = _x; y = _y;
 public class IkadaManager : TileManager {
 
 	[SerializeField] GameObject Wave;
-	[SerializeField] GameObject FrameTile;
+	[SerializeField] GameObject Barrier;
 	protected GameObject gocamera;
 	protected FloatingWater flWater;
 	protected LerpMove lmPlayer;
+	protected static string DATA_MOVEDTIME(int index) { return "MovedTime" + index; }
+	protected static string DATA_CURRENTINDEX { get { return "CurrentIndex"; } }
 
+	int movedTime = 0;
+	int MovedTime {
+		get {return movedTime; }
+		set {
+			movedTime = value; 
+			GameObject.Find("MovedTime/Text").GetComponent<Text>().text = "" + value;
+		}
+	}
 	bool isPlayerView = false;
 	static Pair<Vector3>[] CameraPosAng = new Pair<Vector3>[] {
 		new Pair<Vector3>(new Vector3(-0.2f,9.5f,-0.3f),new Vector3(90,270,0)),
@@ -38,7 +48,7 @@ public class IkadaManager : TileManager {
 		move.LocalPosition = CameraPosAng[n].x;
 	}
 	protected void SetLighting() {
-		float intensity = 1f - (float)CurrentStageIndex / StageMax + 0.1f;
+		float intensity = 1f -0.7f * (float)CurrentStageIndex / StageMax ;
 		RenderSettings.skybox.SetFloat("_Exposure", intensity);
 		GameObject.Find("Directional light").GetComponent<Light>().intensity = intensity;
 	}
@@ -60,6 +70,7 @@ public class IkadaManager : TileManager {
 	protected void DisfloatTiles() {
 		foreach (var lm in AfloatedTiles) {
 			lm.LocalPosition = lm.transform.localPosition + DisFloatDiffVec;
+			lm.ClearSelfActions();
 			lm.AddSelfAction((_lm)=> Destroy(_lm.gameObject));
 		}
 		AfloatedTiles.Clear();
@@ -106,21 +117,9 @@ public class IkadaManager : TileManager {
 	}
 
 
-	bool FrameMade = false;
 	protected virtual void InitTiles(string FileName) {
 		if (FileName != "") Read(FileName);
 		foreach (var t in Tiles) if (t != null) Destroy(t.gameObject);
-		const int FrameSize = 1;
-		if (!FrameMade) {
-			FrameMade = true;
-			for (int x = -FrameSize; x < w + FrameSize; x++) {
-				for (int y = -FrameSize; y < h + FrameSize; y++) {
-					if (0 <= x && x < w && 0 <= y && y < h) continue;
-					Instantiate(FrameTile, GetPositionFromPuzzlePosition(x, y), new Quaternion());
-				}
-			}
-		}
-
 		REP (w,x=> {
 			REP(h, y => {
 				string str = InitialStrTileMap[x, y];
@@ -154,16 +153,21 @@ public class IkadaManager : TileManager {
 		});
 		px = w - 1; py = h - 1;
 		px += 8;
-		SetLighting();
-		lmPlayer.Position = Player.transform.position =  GetPositionFromPuzzlePosition(px, py);
+
+		lmPlayer.Position = Player.transform.position = GetPositionFromPuzzlePosition(px, py);
 		lmPlayer.Rotate = new Vector3(0,90 * prePlayerDirection.GetDiffOrderByLBRT(new Across(false, true, false, false, false)), 0);
 		prePlayerDirection = new Across(false, true, false, false, false);
 		isComingPlayer = true;
 		Queue<Vec2> pos = new Queue<Vec2>();
 		REP(8, i => pos.Enqueue(new Vec2(px-i, py)));
 		AfloatTiles(pos, FloorTile.gameObject,0.3f);
+		StaticSaveData.Set(DATA_CURRENTINDEX, CurrentStageIndex);
+		GameObject.Find("StageIndex/Text").GetComponent<Text>().text = "Stage "+ CurrentStageIndex;
 		SetCamera(2);
+		SetLighting();
+		MovedTime = 0;
 		WaitTime = Time.time;
+		
 	}
 
 	Across prePlayerDirection = new Across(false,true,false,false,false);
@@ -198,7 +202,8 @@ public class IkadaManager : TileManager {
 				lmPlayer.Rotate = new Vector3(0, Angle, 0);
 			}
 			prePlayerDirection = playerDirection;
-			MoveCharacters(dx,dy);
+			if (MoveCharacters(dx, dy) != MoveType.DidntMove) MovedTime++;
+			else { Instantiate(Barrier,Player.transform.position + new Vector3(-playerDirection.Vertical,0,playerDirection.Horizontal) * tileSize /2 + new Vector3(0,0.5f,0),Player.transform.rotation); }
 			lmPlayer.Position = GetPositionFromPuzzlePosition(px, py)
 				+ tileSize * 0.36f * new Vector3(-1 * (PlayerTilePos.T ? 1 : PlayerTilePos.B ? -1 : 0),0,
 				PlayerTilePos.R ? 1 : PlayerTilePos.L ? -1 : 0);
@@ -214,7 +219,7 @@ public class IkadaManager : TileManager {
 			lmPlayer.Position = GetPositionFromPuzzlePosition(px, py);
 			if (px == w - 1) {
 				isComingPlayer = false;
-				SetCamera(1);
+				SetCamera(0);
 				DisfloatTiles();
 			}
 		}
@@ -238,7 +243,6 @@ public class IkadaManager : TileManager {
 		}else if(isGoaled){
 			GoaledPlayer();
 		} else {
-			MovePlayer();
 			if (Input.GetKeyDown(KeyCode.R)) InitTiles(BaseStageName);
 			else if (Input.GetKeyDown(KeyCode.N)) {
 				CurrentStageIndex++; InitTiles(BaseStageName);
@@ -255,6 +259,11 @@ public class IkadaManager : TileManager {
 				REP(20, i => pos.Enqueue(new Vec2(px - i, py)));
 				AfloatTiles(pos, FloorTile.gameObject, 0.3f);
 				SetCamera(2);
+				int oldTime; StaticSaveData.Get(DATA_MOVEDTIME(CurrentStageIndex), out oldTime);
+				if (oldTime == 0 || MovedTime < oldTime)
+					StaticSaveData.Set(DATA_MOVEDTIME(CurrentStageIndex), MovedTime);
+			} else {
+				MovePlayer();
 			}
 		}
 	}

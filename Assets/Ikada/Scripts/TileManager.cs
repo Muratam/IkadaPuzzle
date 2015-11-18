@@ -239,62 +239,69 @@ public class TileManager : MonoBehaviour {
     // 1 上陸出来るなら上陸する
     // 2 下が筏で目の前が水->動かせる
     // 3 下が筏で目の前が筏->上陸できないかつ動かせる(行き先が水なら)なら押す
-	protected bool MoveIkada(int x, int y, Across Direction) {
-        if (!Direction.HaveDirection) return false;
-        if (Direction.HaveTiltDirection) return false;
+	protected enum MoveType {Moved,Pushed,DidntMove }
+	protected MoveType MoveIkada(int x, int y, Across Direction) {
+		if (!Direction.HaveDirection) return MoveType.DidntMove;
+		if (Direction.HaveTiltDirection) return MoveType.DidntMove;
         //if (CanAcrossRide(x, y, Direction, Position)) return false;
         var tile = Tiles[x, y].tile;
-        if (tile.tileType != Tile.TileType.Ikada) return false;
-        if (!(tile.ExAcross & Direction).HaveDirection) return false;        
+		if (tile.tileType != Tile.TileType.Ikada) return MoveType.DidntMove;
+		if (!(tile.ExAcross & Direction).HaveDirection) return MoveType.DidntMove;        
         int Desx = x + Direction.Horizontal;
         int Desy = y + Direction.Vertical;
-        if (!IsInRange(Desx, Desy)) return false;
+		if (!IsInRange(Desx, Desy)) return MoveType.DidntMove;
         var DesTile = Tiles[Desx, Desy].tile;
         if (DesTile.tileType == Tile.TileType.Water) {
             px += Direction.Horizontal;
             py += Direction.Vertical;
             SwapTileMaps(Desx, Desy, x, y);
-            return true;
+            return MoveType.Moved;
         } else if (DesTile.tileType == Tile.TileType.Ikada) {
             int Des2x = Desx + Direction.Horizontal;
             int Des2y = Desy + Direction.Vertical;
-            if (!IsInRange(Des2x, Des2y)) return false;
+			if (!IsInRange(Des2x, Des2y)) return MoveType.DidntMove;
             var Des2Tile = Tiles[Des2x, Des2y].tile;
             if (Des2Tile.tileType == Tile.TileType.Water && (tile.ExAcross & Direction).HaveDirection) {
                 SwapTileMaps(Desx, Desy, Des2x, Des2y);
-                return true;
+                return MoveType.Pushed;
             }
         }
-        return false;
+		return MoveType.DidntMove;
     }
 
-	protected void MoveCharacters(int dx,int dy) {
+	protected MoveType MoveCharacters(int dx,int dy) {
         Across direction = new Across(dx == 1, dx == -1, dy == 1, dy == -1, false);
         var centerPosition = new Across(false, false, false, false, true);
         //基本的に内側に行かせて、行けないときのみ端にする
-        while (true) {
+		var mtlist = new Stack<MoveType>();
+		while (true) {
             int prepx = px, prepy = py;
             var prepos = PlayerTilePos;
             if (isPlayerInside()) {
                 if (CanGoFromInside(px, py, direction)) {
                     PlayerTilePos = direction;
-                } else MoveIkada(px, py, direction);
+                } else mtlist.Push( MoveIkada(px, py, direction));
             } else {
                 if (CanGoToInside(px, py, direction, PlayerTilePos)) {
                     PlayerTilePos = centerPosition;
-                } else if (CanAcrossRide(px, py, direction, PlayerTilePos)) {
-                    PlayerTilePos = PlayerTilePos.ReversePosition();
-                    px += dx; py += dy;
+				} else if (CanAcrossRide(px, py, direction, PlayerTilePos)) {
+					mtlist.Push(MoveType.Moved);
+					PlayerTilePos = PlayerTilePos.ReversePosition();
+					px += dx; py += dy;
 					break;
-                } else if (MoveIkada(px, py, direction)) {
-                    break;
-                }
+				} else {
+					mtlist.Push(MoveIkada(px, py, direction));
+					if(mtlist.Peek() != MoveType.DidntMove) break;
+				}
 			}
-			if (isPlayerInside()) break;
             if (prepx == px && prepy == py && prepos == PlayerTilePos) break;
-        }
+			if (isPlayerInside()) { break; }
+		}
+
         if ((Tiles[px, py].tile.InAcross & PlayerTilePos).HaveDirection) { PlayerTilePos = new Across(false, false, false, false, true); }
-    
+		if (mtlist.Contains(MoveType.Moved)) return MoveType.Moved;
+		else if (mtlist.Contains(MoveType.Pushed)) return MoveType.Pushed;
+		else return MoveType.DidntMove;
     }
 
 
