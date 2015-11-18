@@ -12,14 +12,15 @@ public class WWWManager : MonoBehaviour {
 
     private string url = "http://hogera.sakura.ne.jp/muratam/ikadapuzzle/ikada.php";
 
-    public IEnumerator RegisterStage(Action<int> callback, string stage, string stageName, int userId = -1) {
+    public IEnumerator RegisterStage(Action<int> callback, string stageName, string stage, int id = -1, int userId = -1) {
 
         WWWForm wwwForm = new WWWForm();
 
         wwwForm.AddField("keyword", "RegisterStage");
-        wwwForm.AddField("stage", stage);
         wwwForm.AddField("stage_name", stageName);
-        if (userId != -1) wwwForm.AddField("user_id", userId);
+        wwwForm.AddField("stage", stage);
+        wwwForm.AddField("id", id);
+        wwwForm.AddField("user_id", userId);
 
         WWW www = new WWW(url, wwwForm);
 
