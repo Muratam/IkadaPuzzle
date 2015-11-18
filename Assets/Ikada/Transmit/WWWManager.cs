@@ -12,7 +12,7 @@ public class WWWManager : MonoBehaviour {
 
     private string url = "http://hogera.sakura.ne.jp/muratam/ikadapuzzle/ikada.php";
 
-    public IEnumerator RegisterStage(Action<bool> callback, string stage, string stageName, int userId = -1) {
+    public IEnumerator RegisterStage(Action<int> callback, string stage, string stageName, int userId = -1) {
 
         WWWForm wwwForm = new WWWForm();
 
@@ -28,18 +28,18 @@ public class WWWManager : MonoBehaviour {
         var result = ParseJson(www);   
 
         if (result == null || !(result is Dictionary<string, object>)) {
-            callback(false);
+            callback(-1);
             yield break;
 
         } else {
             var resultDictionary = (Dictionary<string, object>)result;
 
             if (resultDictionary.ContainsKey("result") && (string)resultDictionary["result"] == "ok") {
-                callback(true);
+                callback(int.Parse((string)resultDictionary["id"]));
                 yield break;
 
             } else {
-                callback(false);
+                callback(-1);
                 yield break;
             }
         } 

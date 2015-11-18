@@ -12,13 +12,13 @@ public class Sample : MonoBehaviour {
     void Start () {
 
         button1.onClick.AddListener(() => {
-            StartCoroutine(GameObject.FindObjectOfType<WWWManager>().RegisterStage(isSuccess => {
+            StartCoroutine(GameObject.FindObjectOfType<WWWManager>().RegisterStage(id => {
 
                 //通信処理の成否を受け取る任意の処理
-                if (isSuccess) {
-                    Debug.Log("成功しました！");
+                if (id != -1) {
+                    Debug.Log("成功しました！ id:" + id);
                 } else {
-                    Debug.Log("失敗しましたあ");
+                    Debug.Log("失敗しましたあ id:" + id);
                 }
 
             }, "[] [] [] [] .. .. []", "test"));
@@ -62,7 +62,7 @@ public class Sample : MonoBehaviour {
                     Debug.Log("失敗しましたあ");
                 }
 
-            }, "stagename01"));
+            }, "test"));
         });
 
     }
