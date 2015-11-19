@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System;
 
 public class StageSelectManager : IkadaManager {
-	static readonly Vector3 WallFloorDiffVec = new Vector3(0, -0.5f, 0);
-	[SerializeField] TransitionUI UIs;
-	int[] MovedTime = new int[StageMax];
+	protected static readonly Vector3 WallFloorDiffVec = new Vector3(0, -0.5f, 0);
+	[SerializeField] protected TransitionUI UIs;
+	protected int[] MovedTime = new int[StageMax];
 	protected virtual void InitTiles() {
 		REP(StageMax, i => {
 			var floor = Instantiate(WallTile, GetPositionFromPuzzlePosition(i,h/2)+WallFloorDiffVec, new Quaternion()) as TileObject;
@@ -29,13 +29,15 @@ public class StageSelectManager : IkadaManager {
 		flWater.transform.localScale = new Vector3(40, 3 * StageMax, 1);
 		Player.transform.SetParent(flWater.transform);
 		Stage.transform.SetParent(flWater.transform);
+		GameObject.Find("Canvas/BackScene").GetComponent<Button>().onClick.AddListener(() => {
+			if (!isGoingToStage) Application.LoadLevel("SceneSelect"); });
 		InitTiles();
 		lmPlayer.SetInit(true);
 		SetUIs();
 	}
-	int predx = 1;
-	GameObject TransParticle;
-	bool LerpFinishedOnce = false;
+	protected int predx = 1;
+	protected GameObject TransParticle;
+	protected bool LerpFinishedOnce = false;
 	protected virtual void MovePlayer() {
 		if (lmPlayer.LerpFinished) {
 			if (!LerpFinishedOnce) {
@@ -55,7 +57,7 @@ public class StageSelectManager : IkadaManager {
 			SetUIs();
 		} 
 	}
-	void SetUIs() {
+	protected virtual void SetUIs() {
 		SetLighting();
 		var UIs = GameObject.Find("UIs").GetComponent<TransitionUI>();
 		UIs.name = "OldUIs";
@@ -69,9 +71,9 @@ public class StageSelectManager : IkadaManager {
 		UIs.Vanish();	
 	}
 
-	bool isGoingToStage = false;
-	float DecidedTime = 0f;
-	void GoingToStage() {
+	protected bool isGoingToStage = false;
+	protected float DecidedTime = 0f;
+	protected virtual void GoingToStage() {
 		if (Time.time - DecidedTime < 1f) return;
 		if(lmPlayer.LerpFinished) {
 			py++;
@@ -92,10 +94,6 @@ public class StageSelectManager : IkadaManager {
 				AfloatTiles(pos, WallTile.gameObject,0.25f, WallFloorDiffVec);
 				lmPlayer.Rotate = new Vector3(0, predx  * -90 ,0);
 				DecidedTime = Time.time;
-			} else if (Input.GetKeyDown(KeyCode.R)){
-				Debug.Log(StaticSaveData.path);
-			} else if (Input.GetKeyDown(KeyCode.W)) {
-				
 			}
 		} else {
 			GoingToStage();

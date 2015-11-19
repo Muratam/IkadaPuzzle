@@ -130,7 +130,8 @@ public class WWWManager : MonoBehaviour {
 
 
         //Jsonから通信結果とエラー情報の取得//////////////////////////////////////
-        Debug.Log(www.text); //DEBUG: wwwの内容一覧表示
+
+		//Debug.Log(www.text); //DEBUG: wwwの内容一覧表示
         var json = Json.Deserialize(www.text) as Dictionary<string, object>;
 
         var error = (List<object>)json["error"];

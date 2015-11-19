@@ -17,6 +17,14 @@ public class IkadaManager : TileManager {
 	protected LerpMove lmPlayer;
 	protected static string DATA_MOVEDTIME(int index) { return "MovedTime" + index; }
 	protected static string DATA_CURRENTINDEX { get { return "CurrentIndex"; } }
+	public enum PlayMode {Story,Edit,Online }
+	public PlayMode CurrentMode { 
+		get {
+			if (EditStageData.Current != null) return PlayMode.Edit;
+			else if (OnlineStageManager.OnlineStages_Name_Data != null) return PlayMode.Online;
+			else return PlayMode.Story;
+		}
+	}
 
 	int movedTime = 0;
 	int MovedTime {
@@ -81,10 +89,23 @@ public class IkadaManager : TileManager {
 		lmPlayer = Player.GetComponent<LerpMove>();
 		gocamera = GameObject.Find("Main Camera");
 		flWater = GameObject.Find("Water").GetComponent<FloatingWater>();
-		GameObject.Find("ToEditor").GetComponent<Button>().onClick.AddListener(() => { Application.LoadLevel("StageEdit"); });
+		var bBackScene = GameObject.Find("BackScene").GetComponent<Button>();
+		bBackScene.onClick.AddListener(() => {
+			if (CurrentMode == PlayMode.Story) Application.LoadLevel("StageSelect");
+			else if (CurrentMode == PlayMode.Edit) Application.LoadLevel("StageEdit");
+			else if (CurrentMode == PlayMode.Online) Application.LoadLevel("OnlineStage");
+		});
+		GameObject.Find("Canvas/Reset").GetComponent<Button>().onClick.AddListener(() => { InitTiles(BaseStageName);});
+		bBackScene.transform.FindChild("Text").GetComponent<Text>().text =
+			CurrentMode == PlayMode.Story ? "ステージ選択へ" :
+			CurrentMode == PlayMode.Edit  ? "ステージエディターへ"
+			: "ステージ選択へ";
 		CameraPosAng.Foreach((i, cam) => {
 			var button = GameObject.Find("Camera" + i).GetComponent<Button>();
-			button.onClick.AddListener(() => { SetCamera(int.Parse(button.name.Replace("Camera", ""))); });
+			button.onClick.AddListener(() => {
+				StaticSaveData.Set("CameraPos", int.Parse(button.name.Replace("Camera", "")));
+				SetCamera(int.Parse(button.name.Replace("Camera", ""))); 
+			});
 		});		
 		InitTiles(BaseStageName);
 		Player.transform.SetParent(flWater.transform);
@@ -118,7 +139,13 @@ public class IkadaManager : TileManager {
 
 
 	protected virtual void InitTiles(string FileName) {
-		if (FileName != "") Read(FileName);
+		if (CurrentMode == PlayMode.Story) {
+			if (FileName != "") Read(FileName);
+		} else if (CurrentMode == PlayMode.Edit) {
+			InitialStrTileMap = EditStageData.Current.MakeUpStageMap();
+		} else {
+			InitialStrTileMap = ConvertStageMap (OnlineStageManager.OnlineStage.y);
+		}
 		foreach (var t in Tiles) if (t != null) Destroy(t.gameObject);
 		REP (w,x=> {
 			REP(h, y => {
@@ -162,7 +189,10 @@ public class IkadaManager : TileManager {
 		REP(8, i => pos.Enqueue(new Vec2(px-i, py)));
 		AfloatTiles(pos, FloorTile.gameObject,0.3f);
 		StaticSaveData.Set(DATA_CURRENTINDEX, CurrentStageIndex);
-		GameObject.Find("StageIndex/Text").GetComponent<Text>().text = "Stage "+ CurrentStageIndex;
+		GameObject.Find("StageIndex/Text").GetComponent<Text>().text 
+			= CurrentMode == PlayMode.Story ? "Stage "+ CurrentStageIndex 
+			: CurrentMode == PlayMode.Edit ?  EditStageData.Current.Name
+			: OnlineStageManager.OnlineStage.x;
 		SetCamera(2);
 		SetLighting();
 		MovedTime = 0;
@@ -219,7 +249,9 @@ public class IkadaManager : TileManager {
 			lmPlayer.Position = GetPositionFromPuzzlePosition(px, py);
 			if (px == w - 1) {
 				isComingPlayer = false;
-				SetCamera(0);
+				int CameraPos;
+				StaticSaveData.Get("CameraPos",out CameraPos);
+				SetCamera(CameraPos);
 				DisfloatTiles();
 			}
 		}
@@ -232,7 +264,14 @@ public class IkadaManager : TileManager {
 			if (px == -8) {
 				DisfloatTiles();
 				isGoaled = false;
-				CurrentStageIndex++; InitTiles(BaseStageName);
+				if (CurrentMode == PlayMode.Story) {
+					CurrentStageIndex++;
+					InitTiles(BaseStageName);
+				} else if (CurrentMode == PlayMode.Edit){
+					Application.LoadLevel("StageEdit");
+				} else if( CurrentMode == PlayMode.Online){
+					Application.LoadLevel("OnlineStage");	
+				}
 			}
 		}	
 	}
@@ -243,14 +282,7 @@ public class IkadaManager : TileManager {
 		}else if(isGoaled){
 			GoaledPlayer();
 		} else {
-			if (Input.GetKeyDown(KeyCode.R)) InitTiles(BaseStageName);
-			else if (Input.GetKeyDown(KeyCode.N)) {
-				CurrentStageIndex++; InitTiles(BaseStageName);
-			} else if (Input.GetKeyDown(KeyCode.B)) {
-				CurrentStageIndex--; InitTiles(BaseStageName);
-			} else if (Input.GetKeyDown(KeyCode.Escape)) {
-				Application.LoadLevel("StageSelect");
-			} else if (lmPlayer.LerpFinished && px == 0 && Tiles[px, py].tile.tileType == Tile.TileType.Normal) {
+			if (lmPlayer.LerpFinished && px == 0 && Tiles[px, py].tile.tileType == Tile.TileType.Normal) {
 				WaitTime = Time.time;
 				isGoaled = true;
 				lmPlayer.Rotate = new Vector3(0, 90 * prePlayerDirection.GetDiffOrderByLBRT(new Across(false, true, false, false, false)), 0);
@@ -259,12 +291,12 @@ public class IkadaManager : TileManager {
 				REP(20, i => pos.Enqueue(new Vec2(px - i, py)));
 				AfloatTiles(pos, FloorTile.gameObject, 0.3f);
 				SetCamera(2);
-				int oldTime; StaticSaveData.Get(DATA_MOVEDTIME(CurrentStageIndex), out oldTime);
-				if (oldTime == 0 || MovedTime < oldTime)
-					StaticSaveData.Set(DATA_MOVEDTIME(CurrentStageIndex), MovedTime);
-			} else {
-				MovePlayer();
-			}
+				if (CurrentMode == PlayMode.Story) {
+					int oldTime; StaticSaveData.Get(DATA_MOVEDTIME(CurrentStageIndex), out oldTime);
+					if (oldTime == 0 || MovedTime < oldTime)
+						StaticSaveData.Set(DATA_MOVEDTIME(CurrentStageIndex), MovedTime);
+				}
+			} else MovePlayer();
 		}
 	}
 }

@@ -17,7 +17,7 @@ public class TileManager : MonoBehaviour {
 	}
 	protected int EditStageMax{get{return EditStageDatas.Length;}}
 	EditStageData[] EditStageDatas = new EditStageData[10];
-	protected class EditStageData{
+	public class EditStageData{
 		public static EditStageData Current = null;
 		public readonly int LocalID;
 		public int ServerID{get; set;}
@@ -30,7 +30,7 @@ public class TileManager : MonoBehaviour {
 		public void GetMembers() {
 			Dictionary<string, object> dict;
 			StaticSaveData.Get("EditStage" + LocalID, out dict);
-			ServerID = dict!=null ? (dict["ServerID"] is int) ? (int)(dict["ServerID"]) :(int)(long)(dict["ServerID"]) :0;
+			ServerID = dict!=null ? (dict["ServerID"] is int) ? (int)(dict["ServerID"]) :(int)(long)(dict["ServerID"]) :-1;
 			StageMap = dict != null ? (string)(dict["StageMap"]) : "";
 			Name = dict != null ? (string)(dict["Name"]) : "";
 			if (Name == null || Name == "") Name = "EditStage " + LocalID;
@@ -44,23 +44,8 @@ public class TileManager : MonoBehaviour {
 			StaticSaveData.Set("EditStage" + LocalID,data);
 		}
 		public string[,] MakeUpStageMap() {
-			StageMap = StageMap.Replace("\r\n","\n");
 			Current = this;
-			var InitialStrTileMap = new string[w, h];
-			try {
-				var MapDatas = StageMap.Split('\n');
-				for (int y = 0; y < h; y++) {
-					var r = MapDatas[y];
-					var read = r.Split(' ');
-					for (int x = 0; x < w; x++) {
-						InitialStrTileMap[x, h - 1 - y] = read[x];
-					}
-				}
-			} catch {
-				Debug.Log("Strange Map !!");
-				InitialStrTileMap = DefaultTileMap;
-			}
-			return InitialStrTileMap;
+			return TileManager.ConvertStageMap(StageMap);
 		}
 		public void SetUpStageMap(TileObject[,] Tiles) {
 			StageMap = "";
@@ -89,29 +74,56 @@ public class TileManager : MonoBehaviour {
 	public static int StageMax { get { return StageName.Length; } }
 	private static int currentStageIndex = 0;
 	public static int CurrentStageIndex {
-
 		set { currentStageIndex = Mathf.Clamp(value, 0, StageMax -1); }
 		get { return currentStageIndex; }
 	}
+	public static string[,] ConvertStageMap(string StageMap) {
+		StageMap = StageMap.Replace("\r\n", "\n");
+		var InitialStrTileMap = new string[w, h];
+		try {
+			var MapDatas = StageMap.Split('\n');
+			for (int y = 0; y < h; y++) {
+				var r = MapDatas[y];
+				var read = r.Split(' ');
+				for (int x = 0; x < w; x++) {
+					InitialStrTileMap[x, h - 1 - y] = read[x];
+				}
+			}
+		} catch {
+			Debug.Log("Strange Map !!");
+			InitialStrTileMap = DefaultTileMap;
+		}
+		return InitialStrTileMap;
+	}
+	
+
 	public static readonly string[] StageName = new string[]{
-		"Tutorial(101).txt",
-		"Tutorial(102).txt",
-		"Tutorial(103).txt",
-		"Tutorial(201).txt",
-		"Tutorial(202).txt",
-		"Tutorial(301).txt",
-		"Tutorial(302).txt",
-		"Tutorial(303).txt",
-		"Sample2.txt",
-		"kikyo(1).txt",
-		"kikyo(2).txt",
-		"kikyo(3).txt",
-		"kikyo(4).txt",
-		"kikyo(5).txt",
-		"kikyo(6).txt",
-		"kikyo(7).txt",
-		"kikyo(8).txt",
-		"kikyo(9).txt",
+		"Tutorial1_操作方法.txt",
+		"Tutorial2_壁.txt",
+		"Tutorial3_乗り継ぎ",
+		"Tutorial4_押す(1).txt",
+		"Tutorial5_押す(2).txt",
+		"Tutorial6_足場(1).txt",
+		"Tutorial7_足場(2).txt",
+		"Tutorial8_足場(3).txt",
+		"壁を越すには.txt",
+		"急がば回れ.txt",
+		"いかだを乗り継いで.txt",
+		"乗り継ぐ順番.txt",
+		"渡れるいかだはどれだ.txt",
+		"上からか、右からか.txt",
+		"さっきの友が今は敵.txt",
+		"壁の向こうへ.txt",
+		"島への障害物.txt",
+		"島へ行くには.txt",
+		"いかだの選択.txt",
+		"門番いかだ.txt",
+		"6つのいかだ.txt",
+		"5つのいかだ.txt",
+		"5連いかだの先へ.txt",
+		"いかだ迷路.txt",
+		"遠い向こう岸.txt",
+		"いかだの壁.txt",
 	};
 	//private static string baseStageName = "IkadaData/Sample2.txt";
 	public static string BaseStageName { get { return "IkadaData/" + StageName[CurrentStageIndex]; } }
@@ -126,7 +138,7 @@ public class TileManager : MonoBehaviour {
 	protected const int w = 10, h = 8;
 
 	protected virtual Vector3 GetPositionFromPuzzlePosition(int x, int y) { 
-        return tileSize * new Vector3(x - w / 2 + 0.5f, y - h / 2 + 0.5f, 0);
+        return tileSize * new Vector3(x - w / 2 + 0.5f, y - h / 2 + 0.5f - 0.8f, 0);
     }
 	protected virtual void SwapTileMaps(int x1, int y1, int x2, int y2) {
         var tmp = Tiles[x1, y1];
@@ -239,8 +251,11 @@ public class TileManager : MonoBehaviour {
 		});
 	}
 	void InitTiles(EditStageData est) {
-        if(est != null)InitialStrTileMap = est.MakeUpStageMap();
-        foreach (var t in Tiles) if (t != null) Destroy(t.gameObject);
+		if (est != null) {
+			InitialStrTileMap = est.MakeUpStageMap();
+			WriteInput.text = est.Name;
+		}
+		foreach (var t in Tiles) if (t != null) Destroy(t.gameObject);
 
 		REP(w, x => {
 			REP(h, y => {
@@ -410,7 +425,6 @@ public class TileManager : MonoBehaviour {
             fe.name = "temp";
             fe.GetComponent<Button>().onClick.AddListener(() => {
 				InitTiles(f);//"IkadaData/" + f);
-				WriteInput.text = EditStageData.Current.Name;
                 FileListClose();
             });        
         });
@@ -421,20 +435,53 @@ public class TileManager : MonoBehaviour {
     void FileListClose() {
         FileList.transform.parent.gameObject.SetActive(false);
     }
-    
+	void ShowMessage(string message) {
+		MessageUI.gameObject.SetActive(true);
+		MessageUI.ReStart();
+		MessageUI.transform.FindChild("Text").GetComponent<Text>().text = message;
+	}
+	void HideMessage() {
+		if (!MessageUI.gameObject.activeSelf) return;
+		if (!MessageUI.Vanished)MessageUI.Vanish();
+	}
+	TransitionUI MessageUI;
+
     void Awake () {
         FileList = GameObject.Find("FileList");
         FileElm = GameObject.Find("FileList/FileElm");
         FileElm.GetComponent<Button>().onClick.AddListener(() => { FileListClose(); });
         WriteInput = GameObject.Find("WriteInput").GetComponent<InputField>();
+		MessageUI = GameObject.Find("Message").GetComponent<TransitionUI>(); MessageUI.gameObject.SetActive(false);
         GameObject.Find("Read").GetComponent<Button>().onClick.AddListener(() => { FileListOpen(); });
         GameObject.Find("Write").GetComponent<Button>().onClick.AddListener(() => {
 			EditStageData.Current.SetUpStageMap(Tiles);
-			EditStageData.Current.Name = WriteInput.text;
+			EditStageData.Current.Name = WriteInput.text == "" ?"Stage" + EditStageData.Current.LocalID :WriteInput.text ;
 			EditStageData.Current.SetMembers();
+			ShowMessage("ステージを\n 保存しました。");
+			Debug.Log("Saved");
         });
         GameObject.Find("Reset").GetComponent<Button>().onClick.AddListener(() => { InitTiles(null); });
-		GameObject.Find("Play").GetComponent<Button>().onClick.AddListener(() => {Application.LoadLevel("Temprate"); });
+		GameObject.Find("Play").GetComponent<Button>().onClick.AddListener(() => {
+			GameObject.Find("Write").GetComponent<Button>().onClick.Invoke();
+			Application.LoadLevel("Temprate");
+		});
+		GameObject.Find("Publish").GetComponent<Button>().onClick.AddListener(() => {
+			GameObject.Find("Write").GetComponent<Button>().onClick.Invoke();
+			StartCoroutine(GameObject.FindObjectOfType<WWWManager>().RegisterStage(id => {
+				Debug.Log("Publish" +  id );
+				if (id != -1) {
+					ShowMessage("ステージを\n投稿しました！");
+					EditStageData.Current.ServerID = id;
+				} else {
+
+					ShowMessage("失敗しました。\n\nステージ名が\n被っているかも\nしれません。\n\n通信環境も\n確認ください\nまた、全く同じ\nステージは\n投稿出来ません");
+				}
+				EditStageData.Current.SetMembers();
+			}, EditStageData.Current.Name, EditStageData.Current.StageMap,EditStageData.Current.ServerID));
+		});
+		GameObject.Find("Canvas/BackScene").GetComponent<Button>().onClick.AddListener(() => {
+			Application.LoadLevel("SceneSelect");
+		});
 		FileList.transform.parent.gameObject.SetActive(false);
         Player = GameObject.Find("Canvas/Player");
 		REP(EditStageMax, i => { EditStageDatas[i] = new EditStageData(i); });
@@ -457,6 +504,25 @@ public class TileManager : MonoBehaviour {
 				 Input.GetKeyDown(KeyCode.DownArrow) ? -1 : 0;
         MoveCharacters(dx,dy);
         UpdateMap();
+		if (Input.GetKeyDown(KeyCode.S)) {
+			StartCoroutine(GameObject.FindObjectOfType<WWWManager>().GetAllStage(dic => {
+				if (dic != null) {
+					dic.Foreach(line => {
+						if (line.Key != "result") {
+							if (line.Value is Dictionary<string, object>) {
+								var stageData = (Dictionary<string, object>)line.Value;
+								Debug.Log(line.Key +" ID:"+ stageData["id"] + ":StageName:" + stageData["stage_name"]);
+								Debug.Log( (string)stageData["stage"]);
+							}
+						}
+					});
+				} else {
+					Debug.Log("失敗しましたあ");
+				}
+			}));
+		} else if (Input.GetKeyDown(KeyCode.D)) {
+			REP(50, i => StartCoroutine(GameObject.FindObjectOfType<WWWManager>().DeleteStage(res => { Debug.Log(res + "  " + i); }, "", i)));
+		} else if (Input.anyKeyDown) { HideMessage(); }
     }
 }
 

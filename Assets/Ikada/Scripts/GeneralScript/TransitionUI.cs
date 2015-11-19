@@ -5,6 +5,8 @@ public class TransitionUI : MonoBehaviour {
 
 	public float InitSize = 0.2f;
 	public float ReSizingTime = 0.4f;
+	public bool EnableAutoVanish = false;
+	public bool Vanished { get; private set; }
 	public TransitionUI NextUI = null;
 	public bool WhenAppearedDestroyThisScript = false;
 	public bool WhenVanishedDestroyGameObject = false;
@@ -42,7 +44,7 @@ public class TransitionUI : MonoBehaviour {
 	public Vector3 AwakePosition { get;  set; }
 	private Vector3 VanishPosition { get { return AwakePosition - (Vector3)LerpOffset; } }
 	private bool isAppearing = true;
-	private bool isVanishing = false;
+	public bool isVanishing {get;private set;}
 	public enum CurveType { Linear, Square, Pop }
 	public CurveType curvetype = CurveType.Linear;
 	Vector3 Lerp(Vector3 Base, Vector3 Dest, float Per) {
@@ -61,6 +63,7 @@ public class TransitionUI : MonoBehaviour {
 	}
 	
 	void Awake() {
+		Vanished = false;
 		ChangeSpeedBySPEEDTYPE();
 		AwakePosition = transform.localPosition;
 		if(AllowLerpMoveAroundAwakePosition)transform.localPosition += (Vector3)LerpOffset;
@@ -69,6 +72,7 @@ public class TransitionUI : MonoBehaviour {
 		isAppearing = true;
 	}
 	public void Start() {
+		Vanished = false;
 		if (NextUI != null && NextUI.gameObject.activeSelf) {
 			NextUI.Start();
 			NextUI.gameObject.SetActive(false);
@@ -79,6 +83,7 @@ public class TransitionUI : MonoBehaviour {
 	}
 
 	public void Vanish() {
+		Vanished = false;
 		isVanishing = true;
 		isAppearing = false;
 		StartTime = Time.time;
@@ -143,6 +148,7 @@ public class TransitionUI : MonoBehaviour {
 				this.transform.localScale = new Vector3(1, 1, 1) * InitSize;
 				if (AllowLerpMoveAroundAwakePosition) { transform.localPosition = VanishPosition; }
 				isVanishing = false;
+				Vanished = true;
 				if (WhenVanishedDestroyGameObject) Destroy(this.gameObject);
 			}
 		}
