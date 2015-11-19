@@ -5,10 +5,85 @@ using System.IO;
 using System;
 using UnityEngine.UI;
 
+/*
+
+
+*/
+
 
 public class TileManager : MonoBehaviour {
 	public static void REP(int n, Action<int> action) {
 		for (int i = 0; i < n; i++) action(i);
+	}
+	protected int EditStageMax{get{return EditStageDatas.Length;}}
+	EditStageData[] EditStageDatas = new EditStageData[10];
+	protected class EditStageData{
+		public static EditStageData Current = null;
+		public readonly int LocalID;
+		public int ServerID{get; set;}
+		public string StageMap{get;private set;}
+		public string Name{get; set;}
+		public EditStageData(int index){
+			LocalID = index;
+			GetMembers();
+		}
+		public void GetMembers() {
+			Dictionary<string, object> dict;
+			StaticSaveData.Get("EditStage" + LocalID, out dict);
+			ServerID = dict!=null ? (dict["ServerID"] is int) ? (int)(dict["ServerID"]) :(int)(long)(dict["ServerID"]) :0;
+			StageMap = dict != null ? (string)(dict["StageMap"]) : "";
+			Name = dict != null ? (string)(dict["Name"]) : "";
+			if (Name == null || Name == "") Name = "EditStage " + LocalID;
+		}
+		public void SetMembers() {
+			var dict = new Dictionary<string,object>();
+			dict["ServerID"] = ServerID;
+			dict["StageMap"] = StageMap;
+			dict["Name"] = Name;
+			string data = MiniJSON.Json.Serialize(dict);
+			StaticSaveData.Set("EditStage" + LocalID,data);
+		}
+		public string[,] MakeUpStageMap() {
+			StageMap = StageMap.Replace("\r\n","\n");
+			Current = this;
+			var InitialStrTileMap = new string[w, h];
+			try {
+				var MapDatas = StageMap.Split('\n');
+				for (int y = 0; y < h; y++) {
+					var r = MapDatas[y];
+					var read = r.Split(' ');
+					for (int x = 0; x < w; x++) {
+						InitialStrTileMap[x, h - 1 - y] = read[x];
+					}
+				}
+			} catch {
+				Debug.Log("Strange Map !!");
+				InitialStrTileMap = DefaultTileMap;
+			}
+			return InitialStrTileMap;
+		}
+		public void SetUpStageMap(TileObject[,] Tiles) {
+			StageMap = "";
+			REP(h, y => {
+				REP(w, x => {
+					var tileobj = Tiles[x, h - 1 - y].tile;
+					switch (tileobj.tileType) {
+						case Tile.TileType.Normal://[]
+							StageMap += "[]"; break;
+						case Tile.TileType.Water://..
+							StageMap += ".."; break;
+						case Tile.TileType.Wall://##
+							StageMap += "##"; break;
+						case Tile.TileType.Ikada:
+							char c0 = AlphabetLib.ToAlphabetFromBool5(tileobj.InAcross.GetRLTBC());
+							char c1 = AlphabetLib.ToAlphabetFromBool5(tileobj.ExAcross.GetRLTBC());
+							StageMap += c0 + "" + c1; break;
+					}
+					StageMap += " ";
+				});
+				StageMap += "\n";
+			});
+		}
 	}
 
 	public static int StageMax { get { return StageName.Length; } }
@@ -66,29 +141,34 @@ public class TileManager : MonoBehaviour {
 	protected bool IsInRange(int x, int y) { return (x >= 0 && y >= 0 && x < Tiles.GetLength(0) && y < Tiles.GetLength(1)); }
 
 	protected string[,] InitialStrTileMap;
+	protected static string[,] DefaultTileMap {
+		get {
+			string[,] strmap = new string[w,h];
+			REP(h, y => REP(w, x => {
+				if (x == 0 || x == w - 1) strmap[x, y] = "[]";
+				else strmap[x, y] = "..";
+			}));
+			return strmap;
+		}
+	}
 
-	protected string[] ListUpFiles() {
-        string path = Application.dataPath;
-        switch(Application.platform){
-            case RuntimePlatform.OSXPlayer : path += "/../../";break; 
-            default :path += "/../" ;break;
-        }
-        return  System.IO.Directory.GetFiles(path + "IkadaData/", "*", SearchOption.TopDirectoryOnly)
-                .Select(s => Path.GetFileName(s)).ToArray();
-
-    }
+	
 
 	protected void Read(string DataName) {
 		using (FileStream f = new FileStream(DataName, FileMode.Open, FileAccess.Read))
 		using (StreamReader reader = new StreamReader(f)) {
-			//BaseStageName = DataName;
-			InitialStrTileMap = new string[w, h];
-			for (int y = 0; y < h; y++) {
-				var r = reader.ReadLine();
-				var read = r.Split(' ');
-				for (int x = 0; x < w; x++) {
-					InitialStrTileMap[x, h - 1 - y] = read[x];
+			try {
+				InitialStrTileMap = new string[w, h];
+				for (int y = 0; y < h; y++) {
+					var r = reader.ReadLine();
+					var read = r.Split(' ');
+					for (int x = 0; x < w; x++) {
+						InitialStrTileMap[x, h - 1 - y] = read[x];
+					}
 				}
+			} catch {
+				Debug.Log("Strange Map !!");
+				InitialStrTileMap = DefaultTileMap;
 			}
 		}
 	}
@@ -98,7 +178,6 @@ public class TileManager : MonoBehaviour {
 			REP(h, y => {
 				string str = "";
 				REP(w, x => {
-
 					var tileobj = Tiles[x, h - 1 - y].tile;
 					switch (tileobj.tileType) {
 						case Tile.TileType.Normal://[]
@@ -159,8 +238,8 @@ public class TileManager : MonoBehaviour {
 			tileobj.SetInitButtonState();
 		});
 	}
-	void InitTiles(string FileName) {
-        if(FileName != "")Read(FileName);
+	void InitTiles(EditStageData est) {
+        if(est != null)InitialStrTileMap = est.MakeUpStageMap();
         foreach (var t in Tiles) if (t != null) Destroy(t.gameObject);
 
 		REP(w, x => {
@@ -309,18 +388,29 @@ public class TileManager : MonoBehaviour {
     GameObject FileElm;
     InputField WriteInput;
     TileObject EditTile;
-    
+
+	protected string[] ListUpFiles() {
+		string path = Application.dataPath;
+		switch (Application.platform) {
+			case RuntimePlatform.OSXPlayer: path += "/../../"; break;
+			default: path += "/../"; break;
+		}
+		return System.IO.Directory.GetFiles(path + "IkadaData/", "*", SearchOption.TopDirectoryOnly)
+				.Select(s => Path.GetFileName(s)).ToArray();
+	}
+
     void FileListOpen() {
         FileList.transform.parent.gameObject.SetActive(true);
         foreach (var c in FileList.GetComponentsInChildren<Button>()) { if (c.gameObject.name == "temp")Destroy(c.gameObject); }
-        var files  = ListUpFiles();
+		var files = EditStageDatas;//.Select(s => s.Name).ToArray(); //ListUpFiles();
         files.ToList().ForEach(f => {
             var fe = Instantiate(FileElm) as GameObject;
             fe.transform.SetParent(FileList.transform);
-            fe.transform.FindChild("Text").GetComponent<Text>().text = f;
+            fe.transform.FindChild("Text").GetComponent<Text>().text = f.Name;
             fe.name = "temp";
             fe.GetComponent<Button>().onClick.AddListener(() => {
-                InitTiles("IkadaData/" + f);
+				InitTiles(f);//"IkadaData/" + f);
+				WriteInput.text = EditStageData.Current.Name;
                 FileListClose();
             });        
         });
@@ -339,13 +429,16 @@ public class TileManager : MonoBehaviour {
         WriteInput = GameObject.Find("WriteInput").GetComponent<InputField>();
         GameObject.Find("Read").GetComponent<Button>().onClick.AddListener(() => { FileListOpen(); });
         GameObject.Find("Write").GetComponent<Button>().onClick.AddListener(() => {
-            Write("IkadaData/" + WriteInput.text + DateTime.Now.ToString("HH-mm-ss(MMdd)") + ".txt");
+			EditStageData.Current.SetUpStageMap(Tiles);
+			EditStageData.Current.Name = WriteInput.text;
+			EditStageData.Current.SetMembers();
         });
-        GameObject.Find("Reset").GetComponent<Button>().onClick.AddListener(() => { InitTiles(""); });
+        GameObject.Find("Reset").GetComponent<Button>().onClick.AddListener(() => { InitTiles(null); });
 		GameObject.Find("Play").GetComponent<Button>().onClick.AddListener(() => {Application.LoadLevel("Temprate"); });
 		FileList.transform.parent.gameObject.SetActive(false);
         Player = GameObject.Find("Canvas/Player");
-		InitTiles(BaseStageName);
+		REP(EditStageMax, i => { EditStageDatas[i] = new EditStageData(i); });
+		InitTiles(EditStageDatas[0]);
 	}
 	protected GameObject Player;
 	protected Across PlayerTilePos = new Across(false, false, false, false, true);

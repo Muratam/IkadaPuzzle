@@ -21,6 +21,7 @@ public static class StaticSaveData {
 	public static void Get(string name, out string t) { saveUtil.Get(name, out t); }
 	public static void Get(string name, out List<object> t) { saveUtil.Get(name, out t); }
 	public static void Get(string name, out object[] t) { saveUtil.Get(name, out t); }
+	public static void Get(string name, out Dictionary<string,object> t) { saveUtil.Get(name, out t); }
 }
 #endif
 
@@ -95,4 +96,10 @@ public class SaveUtil {
 			else t = ((List<object>)data[name]).ToArray();
 		} else t = null;
 	}
+	public void Get(string name, out Dictionary<string, object> t) {
+		if(data.ContainsKey(name)){
+			t = Json.Deserialize((string)data[name]) as Dictionary<string,object>;
+		}else t  = null;
+	}
 }
+
