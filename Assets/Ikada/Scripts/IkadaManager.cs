@@ -12,6 +12,9 @@ public class IkadaManager : TileManager {
 
 	[SerializeField] GameObject Wave;
 	[SerializeField] GameObject Barrier;
+	[SerializeField] TransitionUI UIClear;
+	[SerializeField] TransitionUI UIGo;
+
 	protected GameObject gocamera;
 	protected FloatingWater flWater;
 	protected LerpMove lmPlayer;
@@ -84,7 +87,19 @@ public class IkadaManager : TileManager {
 		AfloatedTiles.Clear();
 	}
 
+
+	string BackSceneText() {
+		return CurrentMode == PlayMode.Story ? "ステージ選択へ" :
+			CurrentMode == PlayMode.Edit ? "ステージエディターへ"
+			: "ステージ選択へ";
+	}
+
 	protected virtual void Awake () {
+		UIGo = GameObject.Find("Canvas/Go").GetComponent<TransitionUI>();
+		UIClear = GameObject.Find("Canvas/Clear").GetComponent<TransitionUI>();
+		UIGo.gameObject.SetActive(false);
+		UIClear.gameObject.SetActive(false);
+
 		Player = GameObject.Find("Player");
 		lmPlayer = Player.GetComponent<LerpMove>();
 		gocamera = GameObject.Find("Main Camera");
@@ -96,17 +111,15 @@ public class IkadaManager : TileManager {
 			else if (CurrentMode == PlayMode.Online) Application.LoadLevel("OnlineStage");
 		});
 		GameObject.Find("Canvas/Reset").GetComponent<Button>().onClick.AddListener(() => { InitTiles(BaseStageName);});
-		bBackScene.transform.FindChild("Text").GetComponent<Text>().text =
-			CurrentMode == PlayMode.Story ? "ステージ選択へ" :
-			CurrentMode == PlayMode.Edit  ? "ステージエディターへ"
-			: "ステージ選択へ";
+		bBackScene.transform.FindChild("Text").GetComponent<Text>().text = BackSceneText();
 		CameraPosAng.Foreach((i, cam) => {
 			var button = GameObject.Find("Camera" + i).GetComponent<Button>();
 			button.onClick.AddListener(() => {
 				StaticSaveData.Set("CameraPos", int.Parse(button.name.Replace("Camera", "")));
 				SetCamera(int.Parse(button.name.Replace("Camera", ""))); 
 			});
-		});		
+		});
+		
 		InitTiles(BaseStageName);
 		Player.transform.SetParent(flWater.transform);
 		Stage.transform.SetParent(flWater.transform);
@@ -185,6 +198,9 @@ public class IkadaManager : TileManager {
 		lmPlayer.Rotate = new Vector3(0,90 * prePlayerDirection.GetDiffOrderByLBRT(new Across(false, true, false, false, false)), 0);
 		prePlayerDirection = new Across(false, true, false, false, false);
 		isComingPlayer = true;
+		UIGo.gameObject.SetActive(true);
+		UIGo.ReStart();
+		UIGo.GetComponent<AudioSource>().Play();
 		Queue<Vec2> pos = new Queue<Vec2>();
 		REP(8, i => pos.Enqueue(new Vec2(px-i, py)));
 		AfloatTiles(pos, FloorTile.gameObject,0.3f);
@@ -202,6 +218,14 @@ public class IkadaManager : TileManager {
 
 	Across prePlayerDirection = new Across(false,true,false,false,false);
 	protected virtual void MovePlayer() {
+		if(Input.GetKeyDown(KeyCode.X)){
+			InitTiles(BaseStageName);	
+			return;
+		} else if (Input.GetKeyDown(KeyCode.Z)) {
+			if (isPlayerView) SetCamera(0);
+			else SetCamera(2);	
+			return;
+		}
 		if (lmPlayer.LerpFinished) {
 			int dx = Input.GetKey(KeyCode.RightArrow) ? 1 :
 					 Input.GetKey(KeyCode.LeftArrow) ? -1 : 0;
@@ -249,6 +273,9 @@ public class IkadaManager : TileManager {
 			lmPlayer.Position = GetPositionFromPuzzlePosition(px, py);
 			if (px == w - 1) {
 				isComingPlayer = false;
+				GameObject.Find("Reset/Text").GetComponent<Text>().text = "リセット\n(Xキー)";
+				GameObject.Find("BackScene/Text").GetComponent<Text>().text = BackSceneText();
+				if (UIGo.gameObject.activeSelf) UIGo.Vanish();
 				int CameraPos;
 				StaticSaveData.Get("CameraPos",out CameraPos);
 				SetCamera(CameraPos);
@@ -263,6 +290,7 @@ public class IkadaManager : TileManager {
 			lmPlayer.Position = GetPositionFromPuzzlePosition(px, py);
 			if (px == -8) {
 				DisfloatTiles();
+				if (UIClear.gameObject.activeSelf) UIClear.Vanish();
 				isGoaled = false;
 				if (CurrentMode == PlayMode.Story) {
 					CurrentStageIndex++;
@@ -278,13 +306,20 @@ public class IkadaManager : TileManager {
 	
 	protected virtual void Update() {
 		if (isComingPlayer) {
-			ComePlayer();
+			GameObject.Find("Reset/Text").GetComponent<Text>().text = "リセット";
+			GameObject.Find("BackScene/Text").GetComponent<Text>().text = BackSceneText() + "\n(Xキー)";
+			if (Input.GetKeyDown(KeyCode.X))
+				GameObject.Find("BackScene").GetComponent<Button>().onClick.Invoke();
+			else ComePlayer();
 		}else if(isGoaled){
 			GoaledPlayer();
 		} else {
 			if (lmPlayer.LerpFinished && px == 0 && Tiles[px, py].tile.tileType == Tile.TileType.Normal) {
 				WaitTime = Time.time;
 				isGoaled = true;
+				UIClear.gameObject.SetActive(true);
+				UIClear.ReStart();
+				UIClear.GetComponent<AudioSource>().Play();
 				lmPlayer.Rotate = new Vector3(0, 90 * prePlayerDirection.GetDiffOrderByLBRT(new Across(false, true, false, false, false)), 0);
 				prePlayerDirection = new Across(false, true, false, false, false);
 				Queue<Vec2> pos = new Queue<Vec2>();

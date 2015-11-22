@@ -95,12 +95,11 @@ public class TileManager : MonoBehaviour {
 		}
 		return InitialStrTileMap;
 	}
-	
 
 	public static readonly string[] StageName = new string[]{
 		"Tutorial1_操作方法.txt",
 		"Tutorial2_壁.txt",
-		"Tutorial3_乗り継ぎ",
+		"Tutorial3_乗り継ぎ.txt",
 		"Tutorial4_押す(1).txt",
 		"Tutorial5_押す(2).txt",
 		"Tutorial6_足場(1).txt",
@@ -126,7 +125,7 @@ public class TileManager : MonoBehaviour {
 		"いかだの壁.txt",
 	};
 	//private static string baseStageName = "IkadaData/Sample2.txt";
-	public static string BaseStageName { get { return "IkadaData/" + StageName[CurrentStageIndex]; } }
+	public static string BaseStageName { get { return "IkadaData/" + CurrentStageIndex + ".txt"; } }
     
 	[SerializeField]protected  TileObject IkadalTile;
     [SerializeField]protected  TileObject FloorTile;

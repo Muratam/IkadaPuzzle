@@ -4,8 +4,17 @@ using UnityEngine.UI;
 using System.Linq;
 public class SceneSelectManager : MonoBehaviour {
 	public static List<Pair<string>> EditStages_Name_Data = null;
+	GameObject audio;
+	void Start() {
+		DontDestroyOnLoad(audio);
+		audio.name = "Audio2";
+	}
 
 	void Awake () {
+		audio = GameObject.Find("Audio");
+		var audio2 = GameObject.Find("Audio2");
+		if (audio2 != null) Destroy(audio2);
+
 		GameObject.Find("ToStoryMode").GetComponent<Button>().onClick.AddListener(() => {
 			TileManager.EditStageData.Current = null;
 			EditStages_Name_Data = null;

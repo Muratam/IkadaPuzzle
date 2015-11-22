@@ -87,13 +87,15 @@ public class StageSelectManager : IkadaManager {
 	protected virtual void Update () {
 		if (!isGoingToStage) {
 			MovePlayer();
-			if (Input.GetKeyDown(KeyCode.UpArrow)) {
+			if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.Return)) {
 				isGoingToStage = true;
 				Queue<Vec2> pos = new Queue<Vec2>();
 				REP(15,i=>pos.Enqueue(new Vec2( px,py+1+i)));
 				AfloatTiles(pos, WallTile.gameObject,0.25f, WallFloorDiffVec);
 				lmPlayer.Rotate = new Vector3(0, predx  * -90 ,0);
 				DecidedTime = Time.time;
+			}else if(Input.GetKeyDown(KeyCode.X)){
+				Application.LoadLevel("SceneSelect");
 			}
 		} else {
 			GoingToStage();
