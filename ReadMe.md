@@ -10,4 +10,4 @@
 
 # Mac/Windows版以外のリリース
 WebGL版（ストーリーモードのみ）は下記で公開しております
-https://unityroom.com/games/ikada_puzzle
+- https://unityroom.com/games/ikada_puzzle
