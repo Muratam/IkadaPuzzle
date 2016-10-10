@@ -124,8 +124,7 @@ public class TileManager : MonoBehaviour {
 		"遠い向こう岸.txt",
 		"いかだの壁.txt",
 	};
-	//private static string baseStageName = "IkadaData/Sample2.txt";
-	public static string BaseStageName { get { return "IkadaData/" + CurrentStageIndex + ".txt"; } }
+	public static string BaseStageName { get { return  "IkadaData/" + CurrentStageIndex ; } }
     
 	[SerializeField]protected  TileObject IkadalTile;
     [SerializeField]protected  TileObject FloorTile;
@@ -166,21 +165,20 @@ public class TileManager : MonoBehaviour {
 	
 
 	protected void Read(string DataName) {
-		using (FileStream f = new FileStream(DataName, FileMode.Open, FileAccess.Read))
-		using (StreamReader reader = new StreamReader(f)) {
-			try {
-				InitialStrTileMap = new string[w, h];
-				for (int y = 0; y < h; y++) {
-					var r = reader.ReadLine();
-					var read = r.Split(' ');
-					for (int x = 0; x < w; x++) {
-						InitialStrTileMap[x, h - 1 - y] = read[x];
-					}
+		var textAsset = Resources.Load (DataName) as TextAsset;
+		try {
+			var lines = textAsset.text.Split ('\n');
+			InitialStrTileMap = new string[w, h];
+			for (int y = 0; y < h; y++) {
+				var r = lines[y];
+				var read = r.Split(' ');
+				for (int x = 0; x < w; x++) {
+					InitialStrTileMap[x, h - 1 - y] = read[x];
 				}
-			} catch {
-				Debug.Log("Strange Map !!");
-				InitialStrTileMap = DefaultTileMap;
 			}
+		} catch {
+			Debug.Log("Strange Map !!");
+			InitialStrTileMap = DefaultTileMap;
 		}
 	}
 	protected void Write(string DataName) {
