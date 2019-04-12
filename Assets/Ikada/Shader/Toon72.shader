@@ -9,9 +9,8 @@ Shader "Custom/Toon72" {
         _Outline ("Outline width", Range (.002, 3)) = 1.06
         //_Outline ("Outline width", Range (.002, 0.06)) = .005
 		_MainTex ("Base (RGB)", 2D) = "white" { }
-        _Ramp ("Toon Ramp (RGB)", 2D) = "gray" {} 
+        _Ramp ("Toon Ramp (RGB)", 2D) = "gray" {}
     }
-    
     SubShader {
 		Tags { "RenderType"="Opaque" }
 		Pass {
@@ -22,11 +21,11 @@ Shader "Custom/Toon72" {
             Cull Front // 裏のみ描画
             ZWrite On //深度バッファ
             ColorMask RGB
-            Blend SrcAlpha OneMinusSrcAlpha 
+            Blend SrcAlpha OneMinusSrcAlpha
 
             CGPROGRAM
 			#include "UnityCG.cginc"
-    
+
 			struct appdata {
 				float4 vertex : POSITION;
 				fixed3 normal : NORMAL;
@@ -36,17 +35,15 @@ Shader "Custom/Toon72" {
 				UNITY_FOG_COORDS(0)
 				fixed4 color : COLOR;
 			};
-    
+
 			uniform float _Outline;
 			uniform float4 _OutlineColor;
-    
+
 			v2f vert(appdata v) {
 				v2f o;
 				o.pos = v.vertex;
 				o.pos.xyz =  v.vertex.xyz * _Outline ;
 				o.pos = UnityObjectToClipPos(o.pos);
-				//float3 basepos = mul (UNITY_MATRIX_MVP,v.vertex);
-				//o.pos.xy =basepos +lerp(0,normalize(o.pos.xy-basepos),_Outline ) ;
 				o.color = _OutlineColor;
 				UNITY_TRANSFER_FOG(o,o.pos);
 				return o;
@@ -55,39 +52,15 @@ Shader "Custom/Toon72" {
 	        #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_fog
-            fixed4 frag(v2f i) : COLOR{
+            fixed4 frag(v2f i) : COLOR {
                 UNITY_APPLY_FOG(i.fogCoord, i.color);
 				//UNITY_OPAQUE_ALPHA(i.color.a);
                 return i.color;
             }
             ENDCG
         }
-    	UsePass "Toon/Lit/FORWARD"	
+    	UsePass "Toon/Lit/FORWARD"
     }
-    
+
     Fallback "Toon/Basic"
 }
-
-/*
-*/
-/*
-    Tags { "RenderType"="Opaque" }
-        Cull Front // 裏のみ描画
-		//Lighting Off
-        CGPROGRAM
-            
-		#pragma surface surf Lambert vertex:vert
-		struct Input {
-			float2 uv_MainTex;
-		};
-		float _Outline;
-		void vert (inout appdata_full v) {
-			v.vertex.xyz += v.normal * _Outline;
-		}
-		sampler2D _MainTex;
-		void surf (Input IN, inout SurfaceOutput o) {
-			o.Albedo = tex2D (_MainTex, IN.uv_MainTex).rgb;
-		}
-		ENDCG
-	
-*/

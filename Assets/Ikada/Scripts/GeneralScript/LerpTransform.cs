@@ -44,7 +44,8 @@ public class LerpTransform : MonoBehaviour
         LerpFinished = false;
         this.dstLocalPosition = dstLocalPosition;
         this.dstEulerAngles = ClumpEulerAngle(dstEulerAngles);
-        Debug.Log(this.dstEulerAngles);
+        if (this.gameObject.name == "Main Camera")
+            Debug.Log(this.dstEulerAngles);
     }
     float ClumpEulerAngle(float val)
     {
