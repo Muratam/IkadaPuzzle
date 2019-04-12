@@ -112,6 +112,13 @@ public class StageManager : IkadaCore
         }
     }
 
+    [SerializeField] GameObject PlayerObject;
+    void ToggleHidePlayer()
+    {
+        if (PlayerObject == null) return;
+        PlayerObject.SetActive(!PlayerObject.activeSelf);
+    }
+
     void Awake()
     {
         UIGo = GameObject.Find("Canvas/Go").GetComponent<TransitionUI>();
@@ -131,6 +138,7 @@ public class StageManager : IkadaCore
             else if (CurrentMode == PlayMode.Online) Application.LoadLevel("OnlineStage");
         });
         GameObject.Find("Canvas/Reset").GetComponent<Button>().onClick.AddListener(() => { InitTiles(BaseStageName); });
+        GameObject.Find("Canvas/ToggleHide").GetComponent<Button>().onClick.AddListener(ToggleHidePlayer);
         bBackScene.transform.Find("Text").GetComponent<Text>().text = BackSceneText;
         Player.transform.SetParent(goWorld.transform);
         Stage.transform.SetParent(goWorld.transform);
@@ -246,6 +254,7 @@ public class StageManager : IkadaCore
     void MovePlayer()
     {
         if (Input.GetKeyDown(KeyCode.X)) { InitTiles(BaseStageName); return; }
+        if (Input.GetKeyDown(KeyCode.Z)) { ToggleHidePlayer(); return; }
         if (!lerpPlayer.LerpFinished) return;
         int dx = Input.GetKey(KeyCode.RightArrow) ? 1 :
                  Input.GetKey(KeyCode.LeftArrow) ? -1 : 0;
