@@ -27,7 +27,7 @@ public class OnlineStageManager : StageSelectManager
         //{ int ci; StaticSaveData.Get(DATA_CURRENTINDEX, out ci); CurrentStageIndex = ci; }
         //REP(StageMax, i => StaticSaveData.Get(DATA_MOVEDTIME(i), out MovedTime[i]));
         Player = GameObject.Find("Player");
-        lmPlayer = Player.GetComponent<LerpMove>();
+        lerpPlayer = Player.GetComponent<LerpTransform>();
         gocamera = GameObject.Find("Main Camera");
         (TransParticle = GameObject.Find("TransParticle")).SetActive(false);
         flWater = GameObject.Find("Water").GetComponent<FloatingWater>();
@@ -37,10 +37,10 @@ public class OnlineStageManager : StageSelectManager
         Stage.transform.SetParent(flWater.transform);
         GameObject.Find("Canvas/BackScene").GetComponent<Button>().onClick.AddListener(() =>
         {
-            if (!isGoingToStage) Application.LoadLevel("SceneSelect");
+            if (!alreadyStageSelected) Application.LoadLevel("SceneSelect");
         });
         InitTiles();
-        lmPlayer.SetInit(true);
+        lerpPlayer.Init(true);
         SetUIs();
     }
     protected virtual void InitTiles()
@@ -56,20 +56,16 @@ public class OnlineStageManager : StageSelectManager
 
     protected virtual void MovePlayer()
     {
-        if (lmPlayer.LerpFinished)
+        if (lerpPlayer.LerpFinished)
         {
-            if (!LerpFinishedOnce)
-            {
-                LerpFinishedOnce = true;
-            }
-            int dx = Input.GetKey(KeyCode.RightArrow) ? 1 :
-                        Input.GetKey(KeyCode.LeftArrow) ? -1 : 0;
+            if (!LerpFinishedOnce) LerpFinishedOnce = true;
+            int dx = Input.GetKey(KeyCode.RightArrow) ? 1 : Input.GetKey(KeyCode.LeftArrow) ? -1 : 0;
             if (dx == 0) return;
             if (dx == -1 && px == 0) return;
             if (dx == 1 && px == OnlineStageMax - 1) return;
             px += dx;
-            lmPlayer.Rotate = new Vector3(0, dx == predx ? 0 : 180, 0);
-            lmPlayer.Position = GetPositionFromPuzzlePosition(px, py);
+            lerpPlayer.EulerAngles = new Vector3(0, dx == predx ? 0 : 180, 0);
+            lerpPlayer.Position = GetPositionFromPuzzlePosition(px, py);
             OnlineCurrentStageIndex = px;
             predx = dx;
             SetUIs();
@@ -85,30 +81,26 @@ public class OnlineStageManager : StageSelectManager
         UIs2.name = "UIs";
         UIs2.AwakePosition = UIs.AwakePosition;
         UIs2.transform.SetParent(UIs.transform.parent);
-        GameObject.Find("UIs/StageName").GetComponent<Text>().text
-            = OnlineStage.x;
+        GameObject.Find("UIs/StageName").GetComponent<Text>().text = OnlineStage.x;
         UIs.Vanish();
     }
 
     protected virtual void Update()
     {
-        if (!isGoingToStage)
+        if (!alreadyStageSelected)
         {
             MovePlayer();
             if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.Return))
             {
-                isGoingToStage = true;
+                alreadyStageSelected = true;
                 Queue<Vec2> pos = new Queue<Vec2>();
                 REP(15, i => pos.Enqueue(new Vec2(px, py + 1 + i)));
-                AfloatTiles(pos, WallTile.gameObject, 0.25f, WallFloorDiffVec);
-                lmPlayer.Rotate = new Vector3(0, predx * -90, 0);
+                SummonTiles(pos, WallTile.gameObject, 0.25f, WallFloorDiffVec);
+                lerpPlayer.EulerAngles = new Vector3(0, predx * -90, 0);
                 DecidedTime = Time.time;
             }
         }
-        else
-        {
-            GoingToStage();
-        }
+        else GoToStage();
         gocamera.transform.position = new Vector3(GetPositionFromPuzzlePosition(0, h / 2).x + 2.5f, 2.5f, Player.transform.position.z + 0.0f);
     }
 
