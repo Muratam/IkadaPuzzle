@@ -59,7 +59,7 @@ public class SceneSelectManager : MonoBehaviour {
 			}));
 		});
 		Message = GameObject.Find("Message").GetComponent<TransitionUI>();
-		MessageText = Message.transform.FindChild("Text").GetComponent<Text>();
+		MessageText = Message.transform.Find("Text").GetComponent<Text>();
 		Message.gameObject.SetActive(false);
 	}
 	TransitionUI Message;

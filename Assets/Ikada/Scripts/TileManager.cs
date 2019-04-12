@@ -418,7 +418,7 @@ public class TileManager : MonoBehaviour {
         files.ToList().ForEach(f => {
             var fe = Instantiate(FileElm) as GameObject;
             fe.transform.SetParent(FileList.transform);
-            fe.transform.FindChild("Text").GetComponent<Text>().text = f.Name;
+            fe.transform.Find("Text").GetComponent<Text>().text = f.Name;
             fe.name = "temp";
             fe.GetComponent<Button>().onClick.AddListener(() => {
 				InitTiles(f);//"IkadaData/" + f);
@@ -435,7 +435,7 @@ public class TileManager : MonoBehaviour {
 	void ShowMessage(string message) {
 		MessageUI.gameObject.SetActive(true);
 		MessageUI.ReStart();
-		MessageUI.transform.FindChild("Text").GetComponent<Text>().text = message;
+		MessageUI.transform.Find("Text").GetComponent<Text>().text = message;
 	}
 	void HideMessage() {
 		if (!MessageUI.gameObject.activeSelf) return;

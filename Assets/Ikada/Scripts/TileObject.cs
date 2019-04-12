@@ -42,10 +42,10 @@ public class TileObject : MonoBehaviour{
 			var eb = tile.ExAcross.GetRLTBC();
 			var ib = tile.InAcross.GetRLTBC();
 			for (int i = 0; i < 4; i++)
-                SetColor(transform.FindChild("e" + i).gameObject.GetComponent<Image>(),eb[i]);
+                SetColor(transform.Find("e" + i).gameObject.GetComponent<Image>(),eb[i]);
             for (int i = 0; i < 4; i++)
-                SetColor(transform.FindChild("e" + i + "/i" + i).gameObject.GetComponent<Image>(),ib[i]);
-            SetColor(transform.FindChild("t0").GetComponent<Image>(), tile.InAcross.C);
+                SetColor(transform.Find("e" + i + "/i" + i).gameObject.GetComponent<Image>(),ib[i]);
+            SetColor(transform.Find("t0").GetComponent<Image>(), tile.InAcross.C);
         }
     }
 
@@ -54,10 +54,10 @@ public class TileObject : MonoBehaviour{
 			var eb = tile.ExAcross.GetRLTBC();
 			var ib = tile.InAcross.GetRLTBC();
 			for (int i = 0; i < 4; i++)
-				transform.FindChild("e" + i).gameObject.SetActive(eb[i]);
+				transform.Find("e" + i).gameObject.SetActive(eb[i]);
 			for (int i = 0; i < 4; i++)
-				transform.FindChild("e" + i + "/i" + i).gameObject.SetActive(ib[i]);
-			transform.FindChild("t0").gameObject.SetActive(tile.InAcross.C);
+				transform.Find("e" + i + "/i" + i).gameObject.SetActive(ib[i]);
+			transform.Find("t0").gameObject.SetActive(tile.InAcross.C);
 		}
 	}
 

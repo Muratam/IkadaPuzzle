@@ -22,7 +22,6 @@ namespace UnityStandardAssets.Effects
         private void OnParticleCollision(GameObject other)
         {
             int safeLength = m_ParticleSystem.GetSafeCollisionEventSize();
-
             if (m_CollisionEvents.Length < safeLength)
             {
                 m_CollisionEvents = new ParticleCollisionEvent[safeLength];
@@ -30,24 +29,20 @@ namespace UnityStandardAssets.Effects
 
             int numCollisionEvents = m_ParticleSystem.GetCollisionEvents(other, m_CollisionEvents);
             int i = 0;
-
             while (i < numCollisionEvents)
             {
                 if (Time.time > lastSoundTime + 0.2f)
                 {
                     lastSoundTime = Time.time;
                 }
-
-                var col = m_CollisionEvents[i].collider;
-
-                if (col.attachedRigidbody != null)
+                var col = m_CollisionEvents[i].colliderComponent;
+                var rb = col.GetComponent<Rigidbody>();
+                if (rb != null)
                 {
                     Vector3 vel = m_CollisionEvents[i].velocity;
-                    col.attachedRigidbody.AddForce(vel*force, ForceMode.Impulse);
+                    rb.AddForce(vel * force, ForceMode.Impulse);
                 }
-
                 other.BroadcastMessage("Extinguish", SendMessageOptions.DontRequireReceiver);
-
                 i++;
             }
         }

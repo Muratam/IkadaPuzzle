@@ -1,4 +1,6 @@
-﻿//X : No Lighting
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+//X : No Lighting
 Shader "Custom/Toon72" {
 
     Properties {
@@ -42,7 +44,7 @@ Shader "Custom/Toon72" {
 				v2f o;
 				o.pos = v.vertex;
 				o.pos.xyz =  v.vertex.xyz * _Outline ;
-				o.pos = mul(UNITY_MATRIX_MVP,o.pos);
+				o.pos = UnityObjectToClipPos(o.pos);
 				//float3 basepos = mul (UNITY_MATRIX_MVP,v.vertex);
 				//o.pos.xy =basepos +lerp(0,normalize(o.pos.xy-basepos),_Outline ) ;
 				o.color = _OutlineColor;

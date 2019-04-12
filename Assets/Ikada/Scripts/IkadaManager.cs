@@ -111,7 +111,7 @@ public class IkadaManager : TileManager {
 			else if (CurrentMode == PlayMode.Online) Application.LoadLevel("OnlineStage");
 		});
 		GameObject.Find("Canvas/Reset").GetComponent<Button>().onClick.AddListener(() => { InitTiles(BaseStageName);});
-		bBackScene.transform.FindChild("Text").GetComponent<Text>().text = BackSceneText();
+		bBackScene.transform.Find("Text").GetComponent<Text>().text = BackSceneText();
 		CameraPosAng.Foreach((i, cam) => {
 			var button = GameObject.Find("Camera" + i).GetComponent<Button>();
 			button.onClick.AddListener(() => {
