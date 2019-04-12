@@ -7,6 +7,7 @@ using UnityEngine.UI;
 
 public struct Pos { public int x, y; public Pos(int _x, int _y) { x = _x; y = _y; } };
 
+
 public class TileManager : MonoBehaviour
 {
     public const int w = SystemData.w, h = SystemData.h;

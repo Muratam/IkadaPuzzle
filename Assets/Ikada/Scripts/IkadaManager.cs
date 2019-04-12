@@ -4,6 +4,8 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System;
 
+
+//
 public class IkadaManager : TileManager
 {
     public static int StageMax => SystemData.StageName.Length;
@@ -20,6 +22,8 @@ public class IkadaManager : TileManager
     [SerializeField] TransitionUI UIClear;
     [SerializeField] TransitionUI UIGo;
     [SerializeField] GameObject GoalTarget;
+    [SerializeField] GameObject Hint;
+    [SerializeField] Text HintText;
 
     protected GameObject gocamera;
     protected LerpTransform lerpPlayer;
@@ -235,6 +239,7 @@ public class IkadaManager : TileManager
         SetLighting();
         MovedTime = 0;
         WaitTime = Time.time;
+        Hint.SetActive(false);
 
     }
 
@@ -290,7 +295,7 @@ public class IkadaManager : TileManager
     bool isComingPlayer = true;
     bool isGoaled = false;
     float WaitTime;
-    void ComePlayer()
+    void EnterGame()
     {
         if (Time.time - WaitTime < 1f) return;
         if (!lerpPlayer.LerpFinished) return;
@@ -302,9 +307,18 @@ public class IkadaManager : TileManager
         GameObject.Find("BackScene/Text").GetComponent<Text>().text = BackSceneText;
         if (UIGo.gameObject.activeSelf) UIGo.Vanish();
         SetCamera(false);
+        if (CurrentMode == PlayMode.Story)
+        {
+            if (CurrentStageIndex < SystemData.Hints.Count())
+            {
+                Hint.SetActive(true);
+                HintText.text = SystemData.Hints[CurrentStageIndex];
+            }
+        }
+
         VanishTiles();
     }
-    void GoaledPlayer()
+    void Goaled()
     {
         if (Time.time - WaitTime < 1f) return;
         if (!lerpPlayer.LerpFinished) return;
@@ -324,10 +338,11 @@ public class IkadaManager : TileManager
         else if (CurrentMode == PlayMode.Online)
             Application.LoadLevel("OnlineStage");
     }
-    void Goal()
+    void AchieveGoal()
     {
         WaitTime = Time.time;
         isGoaled = true;
+        Hint.SetActive(false);
         UIClear.gameObject.SetActive(true);
         UIClear.ReStart();
         UIClear.GetComponent<AudioSource>().Play();
@@ -355,17 +370,17 @@ public class IkadaManager : TileManager
             GameObject.Find("BackScene/Text").GetComponent<Text>().text = BackSceneText + "\n(Xキー)";
             if (Input.GetKeyDown(KeyCode.X))
                 GameObject.Find("BackScene").GetComponent<Button>().onClick.Invoke();
-            else ComePlayer();
+            else EnterGame();
             return;
         }
         if (isGoaled)
         {
-            GoaledPlayer();
+            Goaled();
             return;
         }
         if (lerpPlayer.LerpFinished && px == 0 && Tiles[px, py].tile.tileType == Tile.TileType.Normal)
         {
-            Goal();
+            AchieveGoal();
             return;
         }
         MovePlayer();
