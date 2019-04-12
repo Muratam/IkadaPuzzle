@@ -12,9 +12,9 @@ public class Across
 
     public int ToInt()
     {
-        if (this.R) return 0;
-        if (this.B) return 1;
         if (this.L) return 2;
+        if (this.B) return 1;
+        if (this.R) return 0;
         return 3;
     }
     public int GetDiffOrderByLBRT(Across across)

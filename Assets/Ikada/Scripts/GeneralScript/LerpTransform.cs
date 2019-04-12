@@ -66,7 +66,7 @@ public class LerpTransform : MonoBehaviour
         lerpingTime = LerpTime;
         LerpFinished = lerpFinished;
         dstLocalPosition = transform.localPosition;
-        dstEulerAngles = transform.eulerAngles;
+        dstEulerAngles = transform.localEulerAngles;
     }
     void Update()
     {
@@ -75,15 +75,18 @@ public class LerpTransform : MonoBehaviour
         {
             float per = lerpingTime / LerpTime;
             transform.localPosition = Lerp(transform.localPosition, dstLocalPosition, per);
-            transform.eulerAngles = Lerp(transform.eulerAngles, dstEulerAngles, per);
+            transform.localEulerAngles = Lerp(transform.localEulerAngles, dstEulerAngles, per);
         }
         else if (!LerpFinished)
         {
+            if (this.gameObject.name == "Main Camera")
+            {
+                Debug.Log("FINISHED");
+                Debug.Log(this.dstEulerAngles);
+            }
             LerpFinished = true;
             transform.localPosition = dstLocalPosition;
-            transform.eulerAngles = dstEulerAngles;
-            Debug.Log("DEST");
-            Debug.Log(this.dstEulerAngles);
+            transform.localEulerAngles = dstEulerAngles;
             foreach (var action in actions) action();
             actions.Clear();
             if (DestroyWhenFinished) Destroy(this);

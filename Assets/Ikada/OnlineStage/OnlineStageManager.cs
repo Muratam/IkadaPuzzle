@@ -43,11 +43,11 @@ public class OnlineStageManager : StageSelectManager
     }
     protected virtual void InitTiles()
     {
-        REP(OnlineStageMax, i =>
+        foreach (var i in Enumerable.Range(0, OnlineStageMax))
         {
             var floor = Instantiate(WallTile, GetPositionFromPuzzlePosition(i, h / 2) + WallFloorDiffVec, new Quaternion()) as TileObject;
             floor.transform.SetParent(Stage.transform);
-        });
+        }
         px = OnlineCurrentStageIndex; py = h / 2;
         Player.transform.position = GetPositionFromPuzzlePosition(px, py);
     }
@@ -92,7 +92,7 @@ public class OnlineStageManager : StageSelectManager
             {
                 alreadyStageSelected = true;
                 Queue<Vec2> pos = new Queue<Vec2>();
-                REP(15, i => pos.Enqueue(new Vec2(px, py + 1 + i)));
+                foreach (var i in Enumerable.Range(0, 15)) pos.Enqueue(new Vec2(px, py + 1 + i));
                 SummonTiles(pos, WallTile.gameObject, 0.25f, WallFloorDiffVec);
                 lerpPlayer.EulerAngles = new Vector3(0, predx * -90, 0);
                 DecidedTime = Time.time;

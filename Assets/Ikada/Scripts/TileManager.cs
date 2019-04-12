@@ -7,135 +7,10 @@ using UnityEngine.UI;
 
 public class TileManager : MonoBehaviour
 {
-    public class EditStageData
-    {
-        public static EditStageData Current = null;
-        public readonly int LocalID;
-        public int ServerID { get; set; }
-        public string StageMap { get; private set; }
-        public string Name { get; set; }
-        public EditStageData(int index)
-        {
-            LocalID = index;
-            GetMembers();
-        }
-        public void GetMembers()
-        {
-            Dictionary<string, object> dict;
-            StaticSaveData.Get("EditStage" + LocalID, out dict);
-            ServerID = dict != null ? (dict["ServerID"] is int) ? (int)(dict["ServerID"]) : (int)(long)(dict["ServerID"]) : -1;
-            StageMap = dict != null ? (string)(dict["StageMap"]) : "";
-            Name = dict != null ? (string)(dict["Name"]) : "";
-            if (Name == null || Name == "") Name = "EditStage " + LocalID;
-        }
-        public void SetMembers()
-        {
-            var dict = new Dictionary<string, object>();
-            dict["ServerID"] = ServerID;
-            dict["StageMap"] = StageMap;
-            dict["Name"] = Name;
-            string data = MiniJSON.Json.Serialize(dict);
-            StaticSaveData.Set("EditStage" + LocalID, data);
-        }
-        public string[,] MakeUpStageMap()
-        {
-            Current = this;
-            return TileManager.ConvertStageMap(StageMap);
-        }
-        public void SetUpStageMap(TileObject[,] Tiles)
-        {
-            StageMap = "";
-            REP(h, y =>
-            {
-                REP(w, x =>
-                {
-                    var tileobj = Tiles[x, h - 1 - y].tile;
-                    switch (tileobj.tileType)
-                    {
-                        case Tile.TileType.Normal://[]
-                            StageMap += "[]"; break;
-                        case Tile.TileType.Water://..
-                            StageMap += ".."; break;
-                        case Tile.TileType.Wall://##
-                            StageMap += "##"; break;
-                        case Tile.TileType.Ikada:
-                            char c0 = AlphabetLib.ToAlphabetFromBool5(tileobj.InAcross.GetRLTBC());
-                            char c1 = AlphabetLib.ToAlphabetFromBool5(tileobj.ExAcross.GetRLTBC());
-                            StageMap += c0 + "" + c1; break;
-                    }
-                    StageMap += " ";
-                });
-                StageMap += "\n";
-            });
-        }
-    }
-    public static void REP(int n, Action<int> action)
-    {
-        for (int i = 0; i < n; i++) action(i);
-    }
+
+    public const int w = SystemData.w, h = SystemData.h;
     protected int EditStageMax { get { return EditStageDatas.Length; } }
     EditStageData[] EditStageDatas = new EditStageData[10];
-    public static int StageMax { get { return StageName.Length; } }
-    private static int currentStageIndex = 0;
-    public static int CurrentStageIndex
-    {
-        set { currentStageIndex = Mathf.Clamp(value, 0, StageMax - 1); }
-        get { return currentStageIndex; }
-    }
-    public static string[,] ConvertStageMap(string StageMap)
-    {
-        StageMap = StageMap.Replace("\r\n", "\n");
-        var InitialStrTileMap = new string[w, h];
-        try
-        {
-            var MapDatas = StageMap.Split('\n');
-            for (int y = 0; y < h; y++)
-            {
-                var r = MapDatas[y];
-                var read = r.Split(' ');
-                for (int x = 0; x < w; x++)
-                {
-                    InitialStrTileMap[x, h - 1 - y] = read[x];
-                }
-            }
-        }
-        catch
-        {
-            Debug.Log("Strange Map !!");
-            InitialStrTileMap = DefaultTileMap;
-        }
-        return InitialStrTileMap;
-    }
-
-    public static readonly string[] StageName = new string[]{
-        "Tutorial1_操作方法.txt",
-        "Tutorial2_壁.txt",
-        "Tutorial3_乗り継ぎ.txt",
-        "Tutorial4_押す(1).txt",
-        "Tutorial5_押す(2).txt",
-        "Tutorial6_足場(1).txt",
-        "Tutorial7_足場(2).txt",
-        "Tutorial8_足場(3).txt",
-        "壁を越すには.txt",
-        "急がば回れ.txt",
-        "いかだを乗り継いで.txt",
-        "乗り継ぐ順番.txt",
-        "渡れるいかだはどれだ.txt",
-        "上からか、右からか.txt",
-        "さっきの友が今は敵.txt",
-        "壁の向こうへ.txt",
-        "島への障害物.txt",
-        "島へ行くには.txt",
-        "いかだの選択.txt",
-        "門番いかだ.txt",
-        "6つのいかだ.txt",
-        "5つのいかだ.txt",
-        "5連いかだの先へ.txt",
-        "いかだ迷路.txt",
-        "遠い向こう岸.txt",
-        "いかだの壁.txt",
-    };
-    public static string BaseStageName { get { return "IkadaData/" + CurrentStageIndex; } }
 
     [SerializeField] protected TileObject IkadalTile;
     [SerializeField] protected TileObject FloorTile;
@@ -144,7 +19,6 @@ public class TileManager : MonoBehaviour
     [SerializeField] protected GameObject Stage;
     protected TileObject[,] Tiles = new TileObject[w, h];
     protected virtual int tileSize { get { return 120; } } //120
-    protected const int w = 10, h = 8;
 
     protected virtual Vector3 GetPositionFromPuzzlePosition(int x, int y)
     {
@@ -164,21 +38,6 @@ public class TileManager : MonoBehaviour
     protected bool IsInRange(int x, int y) { return (x >= 0 && y >= 0 && x < Tiles.GetLength(0) && y < Tiles.GetLength(1)); }
 
     protected string[,] InitialStrTileMap;
-    protected static string[,] DefaultTileMap
-    {
-        get
-        {
-            string[,] strmap = new string[w, h];
-            REP(h, y => REP(w, x =>
-            {
-                if (x == 0 || x == w - 1) strmap[x, y] = "[]";
-                else strmap[x, y] = "..";
-            }));
-            return strmap;
-        }
-    }
-
-
 
     protected void Read(string DataName)
     {
@@ -187,20 +46,18 @@ public class TileManager : MonoBehaviour
         {
             var lines = textAsset.text.Split('\n');
             InitialStrTileMap = new string[w, h];
-            for (int y = 0; y < h; y++)
+            foreach (var y in Enumerable.Range(0, h))
             {
                 var r = lines[y];
                 var read = r.Split(' ');
-                for (int x = 0; x < w; x++)
-                {
+                foreach (var x in Enumerable.Range(0, w))
                     InitialStrTileMap[x, h - 1 - y] = read[x];
-                }
             }
         }
         catch
         {
             Debug.Log("Strange Map !!");
-            InitialStrTileMap = DefaultTileMap;
+            InitialStrTileMap = SystemData.DefaultTileMap;
         }
     }
     protected void Write(string DataName)
@@ -208,10 +65,10 @@ public class TileManager : MonoBehaviour
         using (FileStream f = new FileStream(DataName, FileMode.Create, FileAccess.Write))
         using (StreamWriter writer = new StreamWriter(f))
         {
-            REP(h, y =>
+            foreach (var y in Enumerable.Range(0, h))
             {
                 string str = "";
-                REP(w, x =>
+                foreach (var x in Enumerable.Range(0, w))
                 {
                     var tileobj = Tiles[x, h - 1 - y].tile;
                     switch (tileobj.tileType)
@@ -228,9 +85,9 @@ public class TileManager : MonoBehaviour
                             str += c0 + "" + c1; break;
                     }
                     str += " ";
-                });
+                }
                 writer.WriteLine(str);
-            });
+            }
         }
     }
     protected void SwitchTile(TileObject tileobj, int x, int y)
@@ -290,10 +147,10 @@ public class TileManager : MonoBehaviour
             WriteInput.text = est.Name;
         }
         foreach (var t in Tiles) if (t != null) Destroy(t.gameObject);
+        foreach (var x in Enumerable.Range(0, w))
 
-        REP(w, x =>
         {
-            REP(h, y =>
+            foreach (var y in Enumerable.Range(0, h))
             {
                 string str = InitialStrTileMap[x, y];
                 TileObject tileobj;
@@ -330,8 +187,8 @@ public class TileManager : MonoBehaviour
                         SwitchTile(tileobj, tileobj.ForClickX, tileobj.ForClickY)
                     );
                 }
-            });
-        });
+            }
+        }
         px = w - 1; py = h - 1;
         Player.transform.position = GetPositionFromPuzzlePosition(w - 1, h - 1);
     }
@@ -352,7 +209,7 @@ public class TileManager : MonoBehaviour
         return (Direction & tile.ExAcross).HaveDirection &&
             (Direction.ReversePosition() & DesTile.ExAcross).HaveDirection;
     }
-    //* キャラクターが筏の内部へ入れるか判定 :InAcross
+    // キャラクターが筏の内部へ入れるか判定 :InAcross
     protected bool CanGoToInside(int x, int y, Across Direction, Across Position)
     {
         if (!IsInRange(x, y)) return false;
@@ -362,7 +219,7 @@ public class TileManager : MonoBehaviour
         var tile = Tiles[x, y].tile;
         return (Position & tile.InAcross) == Position;
     }
-    //* キャラクターが筏の内部から出られるか判定 :InAcross
+    // キャラクターが筏の内部から出られるか判定 :InAcross
     protected bool CanGoFromInside(int x, int y, Across Direction)
     {
         if (!IsInRange(x, y)) return false;
@@ -430,9 +287,7 @@ public class TileManager : MonoBehaviour
             else
             {
                 if (CanGoToInside(px, py, direction, PlayerTilePos))
-                {
                     PlayerTilePos = centerPosition;
-                }
                 else if (CanAcrossRide(px, py, direction, PlayerTilePos))
                 {
                     mtlist.Push(MoveType.Moved);
@@ -546,10 +401,7 @@ public class TileManager : MonoBehaviour
                     EditStageData.Current.ServerID = id;
                 }
                 else
-                {
-
                     ShowMessage("失敗しました。\n\nステージ名が\n被っているかも\nしれません。\n\n通信環境も\n確認ください\nまた、全く同じ\nステージは\n投稿出来ません");
-                }
                 EditStageData.Current.SetMembers();
             }, EditStageData.Current.Name, EditStageData.Current.StageMap, EditStageData.Current.ServerID));
         });
@@ -559,7 +411,8 @@ public class TileManager : MonoBehaviour
         });
         FileList.transform.parent.gameObject.SetActive(false);
         Player = GameObject.Find("Canvas/Player");
-        REP(EditStageMax, i => { EditStageDatas[i] = new EditStageData(i); });
+        foreach (var i in Enumerable.Range(0, EditStageMax))
+            EditStageDatas[i] = new EditStageData(i);
         InitTiles(EditStageDatas[0]);
     }
     protected GameObject Player;
@@ -585,77 +438,23 @@ public class TileManager : MonoBehaviour
         {
             StartCoroutine(GameObject.FindObjectOfType<WWWManager>().GetAllStage(dic =>
             {
-                if (dic != null)
+                Debug.Assert(dic != null, dic);
+                foreach (var line in dic)
                 {
-                    dic.Foreach(line =>
-                    {
-                        if (line.Key != "result")
-                        {
-                            if (line.Value is Dictionary<string, object>)
-                            {
-                                var stageData = (Dictionary<string, object>)line.Value;
-                                Debug.Log(line.Key + " ID:" + stageData["id"] + ":StageName:" + stageData["stage_name"]);
-                                Debug.Log((string)stageData["stage"]);
-                            }
-                        }
-                    });
-                }
-                else
-                {
-                    Debug.Log("失敗しましたあ");
-                }
+                    if (line.Key == "result") return;
+                    if (!(line.Value is Dictionary<string, object>)) return;
+                    var stageData = (Dictionary<string, object>)line.Value;
+                    Debug.Log(line.Key + " ID:" + stageData["id"] + ":StageName:" + stageData["stage_name"]);
+                    Debug.Log((string)stageData["stage"]);
+                };
             }));
         }
         else if (Input.GetKeyDown(KeyCode.D))
         {
-            REP(50, i => StartCoroutine(GameObject.FindObjectOfType<WWWManager>().DeleteStage(res => { Debug.Log(res + "  " + i); }, "", i)));
+            foreach (var i in Enumerable.Range(0, 50))
+                StartCoroutine(GameObject.FindObjectOfType<WWWManager>().DeleteStage(res => { Debug.Log(res + "  " + i); }, "", i));
         }
-        else if (Input.anyKeyDown) { HideMessage(); }
+        else if (Input.anyKeyDown) HideMessage();
     }
 }
 
-public static class AlphabetLib
-{
-    public static int FromAlphabet(char c)
-    {
-        if ('0' <= c && c <= '9') return c - '0';
-        else if ('a' <= c && c <= 'z') return c - 'a' + 10;
-        else return '~';
-    }
-    public static char ToAlphabet(int i)
-    {
-        if (0 <= i && i <= 9) return (char)(i + '0');
-        else return (char)((i - 10) + 'a');
-    }
-    public static bool[] FromAlphabetToBool5(char c)
-    {
-        int I = FromAlphabet(c);
-        int[] pow2 = new int[] { 1, 2, 4, 8, 16, 32 };
-        bool[] b = new bool[5];
-        for (int i = 0; i < 5; i++) b[i] = (I & pow2[i]) / pow2[i] == 1;
-        return b;
-    }
-    public static char ToAlphabetFromBool5(bool[] b)
-    {
-        int I = 0;
-        for (int i = 0, p2 = 1; i < b.Length; i++, p2 *= 2)
-            I += b[i] ? p2 : 0;
-        return ToAlphabet(I);
-    }
-}
-public static class Define72
-{
-    public static void Foreach<T>(this IEnumerable<T> source, Action<T> action)
-    {
-        foreach (var e in source) action(e);
-    }
-    public static void Foreach<T>(this IEnumerable<T> source, Action<int, T> action)
-    {
-        int index = 0;
-        foreach (var e in source)
-        {
-            action(index, e);
-            index++;
-        }
-    }
-}

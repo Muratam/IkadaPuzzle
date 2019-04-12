@@ -11,9 +11,17 @@ public struct Pair<T> { public T x, y; public Pair(T _x, T _y) { x = _x; y = _y;
 public class IkadaManager : TileManager
 {
 
+    public static int StageMax { get { return SystemData.StageName.Length; } }
+    private static int currentStageIndex = 0;
+    public static int CurrentStageIndex
+    {
+        set { currentStageIndex = Mathf.Clamp(value, 0, StageMax - 1); }
+        get { return currentStageIndex; }
+    }
+    public static string BaseStageName { get { return "IkadaData/" + CurrentStageIndex; } }
+
     [SerializeField] GameObject Wave;
     [SerializeField] GameObject Barrier;
-
     [SerializeField] TransitionUI UIClear;
     [SerializeField] TransitionUI UIGo;
 
@@ -160,11 +168,11 @@ public class IkadaManager : TileManager
         else if (CurrentMode == PlayMode.Edit)
             InitialStrTileMap = EditStageData.Current.MakeUpStageMap();
         else
-            InitialStrTileMap = ConvertStageMap(OnlineStageManager.OnlineStage.y);
+            InitialStrTileMap = SystemData.ConvertStageMap(OnlineStageManager.OnlineStage.y);
         foreach (var t in Tiles) if (t != null) Destroy(t.gameObject);
-        REP(w, x =>
+        foreach (var x in Enumerable.Range(0, w))
         {
-            REP(h, y =>
+            foreach (var y in Enumerable.Range(0, h))
             {
                 string str = InitialStrTileMap[x, y];
                 TileObject tileobj;
@@ -189,12 +197,12 @@ public class IkadaManager : TileManager
                         tileobj.tile = new Tile(Tile.TileType.Ikada, inacross, exacross);
                         break;
                 }
-                if (tileobj == null) return;
+                if (tileobj == null) continue;
                 tileobj.transform.SetParent(Stage.transform);
                 tileobj.SetInitgoIkadaState();
                 Tiles[x, y] = tileobj;
-            });
-        });
+            }
+        }
         px = w - 1; py = h - 1;
         px += 8;
 
@@ -206,7 +214,7 @@ public class IkadaManager : TileManager
         UIGo.ReStart();
         UIGo.GetComponent<AudioSource>().Play();
         Queue<Vec2> pos = new Queue<Vec2>();
-        REP(8, i => pos.Enqueue(new Vec2(px - i, py)));
+        foreach (var i in Enumerable.Range(0, 8)) pos.Enqueue(new Vec2(px - i, py));
         SummonTiles(pos, FloorTile.gameObject, 0.3f);
         StaticSaveData.Set(DATA_CURRENTINDEX, CurrentStageIndex);
         GameObject.Find("StageIndex/Text").GetComponent<Text>().text
@@ -221,7 +229,7 @@ public class IkadaManager : TileManager
     }
 
 
-    Across prePlayerDirection = new Across(true, false, false, false, false);
+    Across prePlayerDirection = new Across(false, true, false, false, false);
     protected virtual void MovePlayer()
     {
         if (Input.GetKeyDown(KeyCode.X)) { InitTiles(BaseStageName); return; }
@@ -313,10 +321,11 @@ public class IkadaManager : TileManager
         UIClear.gameObject.SetActive(true);
         UIClear.ReStart();
         UIClear.GetComponent<AudioSource>().Play();
-        lerpPlayer.EulerAngles = new Vector3(0, 90 * prePlayerDirection.GetDiffOrderByLBRT(new Across(false, true, false, false, false)), 0);
-        prePlayerDirection = new Across(true, false, false, false, false);
+        lerpPlayer.EulerAngles = new Vector3(0, 180, 0);
+        prePlayerDirection = new Across(false, true, false, false, false);
         Queue<Vec2> pos = new Queue<Vec2>();
-        REP(20, i => pos.Enqueue(new Vec2(px - i, py)));
+        foreach (var i in Enumerable.Range(0, 20))
+            pos.Enqueue(new Vec2(px - i, py));
         SummonTiles(pos, FloorTile.gameObject, 0.3f);
         SetCamera(true);
         if (CurrentMode == PlayMode.Story)
