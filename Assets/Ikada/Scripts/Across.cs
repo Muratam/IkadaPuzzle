@@ -1,64 +1,20 @@
 ﻿using UnityEngine;
 using System;
 
+
+// 筏の端8方向+真ん中に対応した移動を管理する
+// 内部的には 3x3の{0,1}の行列。
+
 public class Across
 {
     public readonly bool[,] Mat = new bool[3, 3];
+    // Top Left Center Right Bottom
     public bool T { get { return Mat[1, 0]; } set { Mat[1, 0] = value; } }
     public bool L { get { return Mat[0, 1]; } set { Mat[0, 1] = value; } }
     public bool C { get { return Mat[1, 1]; } set { Mat[1, 1] = value; } }
     public bool R { get { return Mat[2, 1]; } set { Mat[2, 1] = value; } }
     public bool B { get { return Mat[1, 2]; } set { Mat[1, 2] = value; } }
 
-    public int ToInt()
-    {
-        if (this.L) return 2;
-        if (this.B) return 1;
-        if (this.R) return 0;
-        return 3;
-    }
-    public int GetDiffOrderByLBRT(Across across)
-    {
-        Func<Across, int> Order = (ac) => ac.L ? 0 : ac.B ? 1 : ac.R ? 2 : 3;
-        return Order(this) - Order(across);
-    }
-    public int Vertical
-    {
-        get
-        {
-            if (T & !B) return 1;
-            else if (B & !T) return -1;
-            else return 0;
-        }
-    }
-    public int Horizontal
-    {
-        get
-        {
-            if (R & !L) return 1;
-            else if (L & !R) return -1;
-            else return 0;
-        }
-    }
-    public bool HaveDirection
-    {
-        get
-        {
-            int n = 0;
-            for (int w = 0; w < 3; w++)
-                for (int h = 0; h < 3; h++)
-                    if (Mat[w, h] && !(w == 1 && h == 1)) n++;
-            return n == 1;
-        }
-    }
-    public bool HaveTiltDirection
-    {
-        get
-        {
-            if (!HaveDirection) return false;
-            return !(T || R || L || B);
-        }
-    }
     public Across(bool _b) { for (int w = 0; w < 3; w++) for (int h = 0; h < 3; h++) Mat[w, h] = _b; }
     public Across(bool _R, bool _L, bool _T, bool _B, bool _C)
     {
@@ -102,6 +58,53 @@ public class Across
             for (int h = 0; h < 3; h++)
                 Mat[w, h] = this.Mat[2 - w, 2 - h];
         return new Across(Mat);
+    }
+
+
+    // 一方向だけの行列に特化
+    public int Vertical
+    {
+        get
+        {
+            if (T & !B) return 1;
+            else if (B & !T) return -1;
+            else return 0;
+        }
+    }
+    public int Horizontal
+    {
+        get
+        {
+            if (R & !L) return 1;
+            else if (L & !R) return -1;
+            else return 0;
+        }
+    }
+    public bool HaveDirection
+    {
+        get
+        {
+            int n = 0;
+            for (int w = 0; w < 3; w++)
+                for (int h = 0; h < 3; h++)
+                    if (Mat[w, h] && !(w == 1 && h == 1)) n++;
+            return n == 1;
+        }
+    }
+    public bool HaveTiltDirection
+    {
+        get
+        {
+            if (!HaveDirection) return false;
+            return !(T || R || L || B);
+        }
+    }
+    public int OneDirectionToAngle()
+    {
+        if (this.L) return 2;
+        if (this.B) return 1;
+        if (this.R) return 0;
+        return 3;
     }
 
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
+// エディットステージに関する(文字列)データを扱う
 public class EditStageData
 {
     public const int h = SystemData.h, w = SystemData.w;

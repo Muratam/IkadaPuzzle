@@ -5,8 +5,9 @@ using System.Collections.Generic;
 using System;
 
 
-//
-public class IkadaManager : TileManager
+// メインの(3D表示の)パズルゲーム画面の実装
+
+public class StageManager : IkadaCore
 {
     public static int StageMax => SystemData.StageName.Length;
     private static int currentStageIndex = 0;
@@ -16,6 +17,8 @@ public class IkadaManager : TileManager
         get { return currentStageIndex; }
     }
     public static string BaseStageName => "IkadaData/" + CurrentStageIndex;
+    protected static string DataMovedTime(int index) { return "MovedTime" + index; }
+    protected static string DataCurrentIndex => "CurrentIndex";
 
     [SerializeField] GameObject Wave;
     [SerializeField] GameObject Barrier;
@@ -24,11 +27,8 @@ public class IkadaManager : TileManager
     [SerializeField] GameObject GoalTarget;
     [SerializeField] GameObject Hint;
     [SerializeField] Text HintText;
-
     protected GameObject gocamera;
     protected LerpTransform lerpPlayer;
-    protected static string DataMovedTime(int index) { return "MovedTime" + index; }
-    protected static string DataCurrentIndex { get { return "CurrentIndex"; } }
     public enum PlayMode { Story, Edit, Online }
     public PlayMode CurrentMode
     {
@@ -51,6 +51,7 @@ public class IkadaManager : TileManager
         }
     }
     bool viewIsFromPlayer = false;
+    // プレイヤーにフォーカス可能
     protected void SetCamera(bool viewIsFromPlayer)
     {
         if (this.viewIsFromPlayer == viewIsFromPlayer) return;
@@ -64,13 +65,14 @@ public class IkadaManager : TileManager
         lerp.EulerAngles = viewIsFromPlayer ? playerEulerAngle : normalEulerAngle;
         lerp.LocalPosition = viewIsFromPlayer ? playerPosition : normalPosition;
     }
+    // 光らせる
     protected void SetLighting()
     {
         float intensity = 1f - 0.7f * (float)CurrentStageIndex / StageMax;
         RenderSettings.skybox.SetFloat("_Exposure", intensity);
         GameObject.Find("Directional light").GetComponent<Light>().intensity = intensity;
     }
-
+    // タイルをシュッと浮かび上がれらせたりする
     static readonly Vector3 DisFloatdiffVec = new Vector3(0, -0.5f, 0);
     protected void SummonTiles(Queue<Pos> poses, GameObject go, float lerpTime = 0.15f, Vector3 diffVec = new Vector3())
     {
@@ -110,7 +112,7 @@ public class IkadaManager : TileManager
         }
     }
 
-    protected virtual void Awake()
+    void Awake()
     {
         UIGo = GameObject.Find("Canvas/Go").GetComponent<TransitionUI>();
         UIClear = GameObject.Find("Canvas/Clear").GetComponent<TransitionUI>();
@@ -134,9 +136,7 @@ public class IkadaManager : TileManager
         Stage.transform.SetParent(goWorld.transform);
         InitTiles(BaseStageName);
     }
-    protected virtual void Start() { }
-    protected override int tileSize { get { return 1; } } //120
-
+    protected override int tileSize => 1;
     protected override Vector3 GetPositionFromPuzzlePosition(int x, int y)
     {
         return tileSize * new Vector3(
@@ -144,7 +144,6 @@ public class IkadaManager : TileManager
             0,
             x - w / 2 + 0.5f);
     }
-
     protected override void SwapTileMaps(int x1, int y1, int x2, int y2)
     {
         var tmp = Tiles[x1, y1];
@@ -164,7 +163,7 @@ public class IkadaManager : TileManager
     }
 
 
-    protected virtual void InitTiles(string FileName)
+    void InitTiles(string FileName)
     {
         if (CurrentMode == PlayMode.Story)
         {
@@ -213,7 +212,7 @@ public class IkadaManager : TileManager
                 }
                 if (tileobj == null) continue;
                 tileobj.transform.SetParent(Stage.transform);
-                tileobj.SetInitgoIkadaState();
+                tileobj.SetInitGoIkadaState();
                 Tiles[x, y] = tileobj;
             }
         }
@@ -223,7 +222,7 @@ public class IkadaManager : TileManager
         lerpPlayer.Position = Player.transform.position = GetPositionFromPuzzlePosition(px, py);
         lerpPlayer.EulerAngles = new Vector3(0, 180, 0);
         prePlayerDirection = new Across(false, true, false, false, false);
-        isComingPlayer = true;
+        isEntering = true;
         UIGo.gameObject.SetActive(true);
         UIGo.ReStart();
         UIGo.GetComponent<AudioSource>().Play();
@@ -243,9 +242,8 @@ public class IkadaManager : TileManager
 
     }
 
-
     Across prePlayerDirection = new Across(false, true, false, false, false);
-    protected virtual void MovePlayer()
+    void MovePlayer()
     {
         if (Input.GetKeyDown(KeyCode.X)) { InitTiles(BaseStageName); return; }
         if (!lerpPlayer.LerpFinished) return;
@@ -276,7 +274,7 @@ public class IkadaManager : TileManager
             lerpPlayer.EulerAngles = new Vector3(0, inx == 0 ? 0 : inx * 180, 0);
             return;
         }
-        int Angle = playerDirection.ToInt() * 90;
+        int Angle = playerDirection.OneDirectionToAngle() * 90;
         lerpPlayer.EulerAngles = new Vector3(0, Angle, 0);
         prePlayerDirection = playerDirection;
         if (MoveCharacters(dx, dy) != MoveType.DidntMove) MovedTime++;
@@ -292,7 +290,7 @@ public class IkadaManager : TileManager
             PlayerTilePos.R ? 1 : PlayerTilePos.L ? -1 : 0);
 
     }
-    bool isComingPlayer = true;
+    bool isEntering = true;
     bool isGoaled = false;
     float WaitTime;
     void EnterGame()
@@ -302,7 +300,7 @@ public class IkadaManager : TileManager
         px--;
         lerpPlayer.Position = GetPositionFromPuzzlePosition(px, py);
         if (px != w - 1) return;
-        isComingPlayer = false;
+        isEntering = false;
         GameObject.Find("Reset/Text").GetComponent<Text>().text = "リセット\n(Xキー)";
         GameObject.Find("BackScene/Text").GetComponent<Text>().text = BackSceneText;
         if (UIGo.gameObject.activeSelf) UIGo.Vanish();
@@ -361,10 +359,9 @@ public class IkadaManager : TileManager
         }
     }
 
-
-    protected virtual void Update()
+    void Update()
     {
-        if (isComingPlayer)
+        if (isEntering)
         {
             GameObject.Find("Reset/Text").GetComponent<Text>().text = "リセット";
             GameObject.Find("BackScene/Text").GetComponent<Text>().text = BackSceneText + "\n(Xキー)";

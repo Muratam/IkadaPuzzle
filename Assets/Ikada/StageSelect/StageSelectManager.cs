@@ -4,14 +4,18 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System;
 
-public class StageSelectManager : IkadaManager
+// この継承に関して(StageSelectManager > StageManger)はあまり良くないパターン。
+// 時間がなかったためステージ選択画面を楽に作成するためにStageMangerを再利用してしまった。
+//
+public class StageSelectManager : StageManager
 {
-    protected static readonly Vector3 WallFloorDiffVec = new Vector3(0, -0.5f, 0);
-    [SerializeField] protected TransitionUI UIs;
-    protected int[] MovedTime = new int[StageMax];
+    static readonly Vector3 WallFloorDiffVec = new Vector3(0, -0.5f, 0);
+    [SerializeField] TransitionUI UIs;
+    int[] MovedTime = new int[StageMax];
     protected virtual int TileLen => StageMax;
     protected virtual int CurrentTile => CurrentStageIndex;
-    protected virtual void InitTiles()
+    protected virtual string StageNameString => SystemData.StageName[CurrentStageIndex].Replace(".txt", "");
+    void InitTiles()
     {
         foreach (var i in Enumerable.Range(0, TileLen))
         {
@@ -49,9 +53,9 @@ public class StageSelectManager : IkadaManager
             StaticSaveData.Get(DataMovedTime(i), out MovedTime[i]);
         SetUp();
     }
-    protected GameObject TransParticle;
-    protected bool LerpFinishedOnce = false;
-    protected virtual void MovePlayer()
+    GameObject TransParticle;
+    bool LerpFinishedOnce = false;
+    void MovePlayer()
     {
         if (!lerpPlayer.LerpFinished) return;
         if (!LerpFinishedOnce) LerpFinishedOnce = true;
@@ -66,8 +70,7 @@ public class StageSelectManager : IkadaManager
         SetUI();
     }
 
-    protected virtual string StageNameString => SystemData.StageName[CurrentStageIndex].Replace(".txt", "");
-    protected virtual void SetUI()
+    void SetUI()
     {
         Debug.Log($"Stage {CurrentStageIndex}");
         SetLighting();
@@ -86,16 +89,16 @@ public class StageSelectManager : IkadaManager
         UIs.Vanish();
     }
 
-    protected bool alreadyStageSelected = false;
-    protected float DecidedTime = 0f;
-    protected virtual void GoToStage()
+    bool alreadyStageSelected = false;
+    float DecidedTime = 0f;
+    void GoToStage()
     {
         if (Time.time - DecidedTime < 1f) return;
         if (!lerpPlayer.LerpFinished) return;
         py++;
         lerpPlayer.Position = GetPositionFromPuzzlePosition(px, py);
         if (py == h / 2 + 7 - 1) TransParticle.SetActive(true);
-        else if (py == h / 2 + 7) Application.LoadLevel("Template");
+        else if (py == h / 2 + 7) Application.LoadLevel("Stage");
     }
     void Update()
     {

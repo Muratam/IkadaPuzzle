@@ -6,14 +6,14 @@ public static class SystemData
 {
     public const int w = 10, h = 8;
     public static readonly string[] StageName = new string[]{
-        "Tutorial1_操作方法.txt",
-        "Tutorial2_壁.txt",
-        "Tutorial3_乗り継ぎ.txt",
-        "Tutorial4_押す(1).txt",
-        "Tutorial5_押す(2).txt",
-        "Tutorial6_足場(1).txt",
-        "Tutorial7_足場(2).txt",
-        "Tutorial8_足場(3).txt",
+        "Tutorial1 操作方法.txt",
+        "Tutorial2 壁.txt",
+        "Tutorial3 乗り継ぎ.txt",
+        "Tutorial4 押す(1).txt",
+        "Tutorial5 押す(2).txt",
+        "Tutorial6 足場(1).txt",
+        "Tutorial7 足場(2).txt",
+        "Tutorial8 足場(3).txt",
         "壁を越すには.txt",
         "急がば回れ.txt",
         "いかだを乗り継いで.txt",
