@@ -82,7 +82,7 @@ public class StageSelectManager : IkadaManager
         var StageNameText = GameObject.Find("UIs/StageName");
         if (StageNameText != null) StageNameText.GetComponent<Text>().text = StageNameString;
         var MovedTimeText = GameObject.Find("UIs/MovedTime");
-        if (MovedTimeText != null) MovedTimeText.GetComponent<Text>().text = MovedTime[CurrentStageIndex] == 0 ? "--" : "" + MovedTime[CurrentStageIndex];
+        if (MovedTimeText != null) MovedTimeText.GetComponent<Text>().text = MovedTime[CurrentStageIndex] == 0 ? "--" : MovedTime[CurrentStageIndex] + "歩";
         UIs.Vanish();
     }
 
