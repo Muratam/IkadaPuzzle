@@ -22,13 +22,17 @@ public class StageSelectManager : IkadaManager
 
     protected virtual void Awake()
     {
-        { int ci; StaticSaveData.Get(DATA_CURRENTINDEX, out ci); CurrentStageIndex = ci; }
+        {
+            int ci;
+            StaticSaveData.Get(DATA_CURRENTINDEX, out ci);
+            CurrentStageIndex = ci;
+        }
         REP(StageMax, i => StaticSaveData.Get(DATA_MOVEDTIME(i), out MovedTime[i]));
         Player = GameObject.Find("Player");
         lerpPlayer = Player.GetComponent<LerpTransform>();
         gocamera = GameObject.Find("Main Camera");
         (TransParticle = GameObject.Find("TransParticle")).SetActive(false);
-        flWater = GameObject.Find("Water").GetComponent<FloatingWater>();
+        var flWater = GameObject.Find("Water").GetComponent<FloatingWater>();
         flWater.transform.position = new Vector3(0, 0, StageMax / 1.5f);
         flWater.transform.localScale = new Vector3(40, 3 * StageMax, 1);
         Player.transform.SetParent(flWater.transform);

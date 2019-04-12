@@ -18,7 +18,6 @@ public class IkadaManager : TileManager
     [SerializeField] TransitionUI UIGo;
 
     protected GameObject gocamera;
-    protected FloatingWater flWater;
     protected LerpTransform lerpPlayer;
     protected static string DATA_MOVEDTIME(int index) { return "MovedTime" + index; }
     protected static string DATA_CURRENTINDEX { get { return "CurrentIndex"; } }
@@ -43,29 +42,17 @@ public class IkadaManager : TileManager
             GameObject.Find("MovedTime/Text").GetComponent<Text>().text = "" + value;
         }
     }
-    bool isPlayerView = false;
-    static Pair<Vector3>[] CameraPosAng = new Pair<Vector3>[] {
-        new Pair<Vector3>(new Vector3(-0.2f,9.5f,-0.3f),new Vector3(90,270,0)),
-        new Pair<Vector3>(new Vector3(5, 8, 0), new Vector3(60, 270, 0)),
-        new Pair<Vector3>(new Vector3(0, 4, -4f), new Vector3(30, 0, 0)),//UnityChan
-	};
-    public static Pair<Vector3> PlayerCameraPosAng { get { return CameraPosAng[2]; } }
-
-    protected void SetCamera(int n)
+    bool viewIsFromPlayer = false;
+    protected void SetCamera(bool viewIsFromPlayer)
     {
+        if (this.viewIsFromPlayer == viewIsFromPlayer) return;
+        this.viewIsFromPlayer = viewIsFromPlayer;
+        var playerView = new Pair<Vector3>(new Vector3(0, 4, -4f), new Vector3(30, 0, 0));
+        var normalView = new Pair<Vector3>(new Vector3(-0.2f, 9.5f, -0.3f), new Vector3(90, 270, 0));
         var lerp = gocamera.GetComponent<LerpTransform>();
-        if (n == 2)
-        {
-            lerp.SetParent(Player.transform);
-            isPlayerView = true;
-        }
-        else
-        {
-            lerp.SetParent(null);
-            isPlayerView = false;
-        }
-        lerp.EulerAngles = CameraPosAng[n].y;
-        lerp.LocalPosition = CameraPosAng[n].x;
+        lerp.SetParent(viewIsFromPlayer ? Player.transform : null);
+        lerp.EulerAngles = viewIsFromPlayer ? playerView.y : normalView.y;
+        lerp.LocalPosition = viewIsFromPlayer ? playerView.x : normalView.x;
     }
     protected void SetLighting()
     {
@@ -120,7 +107,6 @@ public class IkadaManager : TileManager
         Player = GameObject.Find("Player");
         lerpPlayer = Player.GetComponent<LerpTransform>();
         gocamera = GameObject.Find("Main Camera");
-        flWater = GameObject.Find("Water").GetComponent<FloatingWater>();
         var goWorld = GameObject.Find("World");
         var bBackScene = GameObject.Find("BackScene").GetComponent<Button>();
         bBackScene.onClick.AddListener(() =>
@@ -131,19 +117,9 @@ public class IkadaManager : TileManager
         });
         GameObject.Find("Canvas/Reset").GetComponent<Button>().onClick.AddListener(() => { InitTiles(BaseStageName); });
         bBackScene.transform.Find("Text").GetComponent<Text>().text = BackSceneText();
-        CameraPosAng.Foreach((i, cam) =>
-        {
-            var button = GameObject.Find("Camera" + i).GetComponent<Button>();
-            button.onClick.AddListener(() =>
-            {
-                StaticSaveData.Set("CameraPos", int.Parse(button.name.Replace("Camera", "")));
-                SetCamera(int.Parse(button.name.Replace("Camera", "")));
-            });
-        });
-
-        InitTiles(BaseStageName);
         Player.transform.SetParent(goWorld.transform);
         Stage.transform.SetParent(goWorld.transform);
+        InitTiles(BaseStageName);
     }
     protected virtual void Start() { }
     protected override int tileSize { get { return 1; } } //120
@@ -152,7 +128,7 @@ public class IkadaManager : TileManager
     {
         return tileSize * new Vector3(
             -1 * (y - h / 2 + 0.5f),
-            flWater.GetLocalFloating(),
+            0,
             x - w / 2 + 0.5f);
     }
 
@@ -223,7 +199,7 @@ public class IkadaManager : TileManager
         px += 8;
 
         lerpPlayer.Position = Player.transform.position = GetPositionFromPuzzlePosition(px, py);
-        lerpPlayer.EulerAngles = new Vector3(0, 90 * prePlayerDirection.GetDiffOrderByLBRT(new Across(false, true, false, false, false)), 0);
+        lerpPlayer.EulerAngles = new Vector3(0, 180, 0);
         prePlayerDirection = new Across(false, true, false, false, false);
         isComingPlayer = true;
         UIGo.gameObject.SetActive(true);
@@ -237,27 +213,18 @@ public class IkadaManager : TileManager
             = CurrentMode == PlayMode.Story ? "Stage " + CurrentStageIndex
             : CurrentMode == PlayMode.Edit ? EditStageData.Current.Name
             : OnlineStageManager.OnlineStage.x;
-        SetCamera(2);
+        SetCamera(true);
         SetLighting();
         MovedTime = 0;
         WaitTime = Time.time;
 
     }
 
-    Across prePlayerDirection = new Across(false, true, false, false, false);
+
+    Across prePlayerDirection = new Across(true, false, false, false, false);
     protected virtual void MovePlayer()
     {
-        if (Input.GetKeyDown(KeyCode.X))
-        {
-            InitTiles(BaseStageName);
-            return;
-        }
-        else if (Input.GetKeyDown(KeyCode.Z))
-        {
-            if (isPlayerView) SetCamera(0);
-            else SetCamera(2);
-            return;
-        }
+        if (Input.GetKeyDown(KeyCode.X)) { InitTiles(BaseStageName); return; }
         if (!lerpPlayer.LerpFinished) return;
         int dx = Input.GetKey(KeyCode.RightArrow) ? 1 :
                  Input.GetKey(KeyCode.LeftArrow) ? -1 : 0;
@@ -265,7 +232,7 @@ public class IkadaManager : TileManager
                  Input.GetKey(KeyCode.DownArrow) ? -1 : 0;
         if (dx == 0 && dy == 0) return;
         int inx = dx, iny = dy;
-        if (isPlayerView)
+        if (viewIsFromPlayer)
         {
             if (prePlayerDirection.Horizontal != 0)
             {
@@ -279,23 +246,15 @@ public class IkadaManager : TileManager
             }
         }
 
-        //0 R 90 B 180 L 270 T
         var playerDirection = new Across(dx == 1, dx == -1, dy == 1, dy == -1, false);
-        int Angle = prePlayerDirection.GetDiffOrderByLBRT(playerDirection) * 90;
-
-        if (isPlayerView && !(playerDirection & prePlayerDirection).HaveDirection)
+        if (viewIsFromPlayer && !(playerDirection & prePlayerDirection).HaveDirection)
         {
             prePlayerDirection = playerDirection;
-            int Angle = inx == 1 ? 180 : inx == -1 ? -180 : 0;
-            lerpPlayer.EulerAngles = new Vector3(0, Angle, 0);
+            lerpPlayer.EulerAngles = new Vector3(0, inx == 0 ? 0 : inx * 180, 0);
             return;
         }
-        else
-        {
-            if (Angle == 270) Angle = -90;
-            else if (Angle == -270) Angle = 90;
-        }
-        lerpPlayer.EulerAngles = new Vector3(0, playerDirection * 90, 0);
+        int Angle = playerDirection.ToInt() * 90;
+        lerpPlayer.EulerAngles = new Vector3(0, Angle, 0);
         prePlayerDirection = playerDirection;
         if (MoveCharacters(dx, dy) != MoveType.DidntMove) MovedTime++;
         else
@@ -324,9 +283,7 @@ public class IkadaManager : TileManager
         GameObject.Find("Reset/Text").GetComponent<Text>().text = "リセット\n(Xキー)";
         GameObject.Find("BackScene/Text").GetComponent<Text>().text = BackSceneText();
         if (UIGo.gameObject.activeSelf) UIGo.Vanish();
-        int CameraPos;
-        StaticSaveData.Get("CameraPos", out CameraPos);
-        SetCamera(CameraPos);
+        SetCamera(false);
         VanishTiles();
     }
     void GoaledPlayer()
@@ -357,11 +314,11 @@ public class IkadaManager : TileManager
         UIClear.ReStart();
         UIClear.GetComponent<AudioSource>().Play();
         lerpPlayer.EulerAngles = new Vector3(0, 90 * prePlayerDirection.GetDiffOrderByLBRT(new Across(false, true, false, false, false)), 0);
-        prePlayerDirection = new Across(false, true, false, false, false);
+        prePlayerDirection = new Across(true, false, false, false, false);
         Queue<Vec2> pos = new Queue<Vec2>();
         REP(20, i => pos.Enqueue(new Vec2(px - i, py)));
         SummonTiles(pos, FloorTile.gameObject, 0.3f);
-        SetCamera(2);
+        SetCamera(true);
         if (CurrentMode == PlayMode.Story)
         {
             int oldTime; StaticSaveData.Get(DATA_MOVEDTIME(CurrentStageIndex), out oldTime);

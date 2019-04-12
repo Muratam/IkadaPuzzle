@@ -65,7 +65,7 @@ public class LerpTransform : MonoBehaviour
         lerpingTime = LerpTime;
         LerpFinished = lerpFinished;
         dstLocalPosition = transform.localPosition;
-        dstEulerAngles = Vector3.zero;
+        dstEulerAngles = transform.eulerAngles;
     }
     void Update()
     {
