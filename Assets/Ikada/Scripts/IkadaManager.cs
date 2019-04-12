@@ -6,19 +6,20 @@ using System;
 
 public class IkadaManager : TileManager
 {
-    public static int StageMax { get { return SystemData.StageName.Length; } }
+    public static int StageMax => SystemData.StageName.Length;
     private static int currentStageIndex = 0;
     public static int CurrentStageIndex
     {
         set { currentStageIndex = Mathf.Clamp(value, 0, StageMax - 1); }
         get { return currentStageIndex; }
     }
-    public static string BaseStageName { get { return "IkadaData/" + CurrentStageIndex; } }
+    public static string BaseStageName => "IkadaData/" + CurrentStageIndex;
 
     [SerializeField] GameObject Wave;
     [SerializeField] GameObject Barrier;
     [SerializeField] TransitionUI UIClear;
     [SerializeField] TransitionUI UIGo;
+    [SerializeField] GameObject GoalTarget;
 
     protected GameObject gocamera;
     protected LerpTransform lerpPlayer;
@@ -95,11 +96,14 @@ public class IkadaManager : TileManager
     }
 
 
-    string BackSceneText()
+    string BackSceneText
     {
-        return CurrentMode == PlayMode.Story ? "ステージ選択へ" :
-            CurrentMode == PlayMode.Edit ? "ステージエディターへ"
-            : "ステージ選択へ";
+        get
+        {
+            if (CurrentMode == PlayMode.Story) return "ステージ選択へ";
+            if (CurrentMode == PlayMode.Edit) return "ステージエディターへ";
+            return "ステージ選択へ";
+        }
     }
 
     protected virtual void Awake()
@@ -121,7 +125,7 @@ public class IkadaManager : TileManager
             else if (CurrentMode == PlayMode.Online) Application.LoadLevel("OnlineStage");
         });
         GameObject.Find("Canvas/Reset").GetComponent<Button>().onClick.AddListener(() => { InitTiles(BaseStageName); });
-        bBackScene.transform.Find("Text").GetComponent<Text>().text = BackSceneText();
+        bBackScene.transform.Find("Text").GetComponent<Text>().text = BackSceneText;
         Player.transform.SetParent(goWorld.transform);
         Stage.transform.SetParent(goWorld.transform);
         InitTiles(BaseStageName);
@@ -176,15 +180,24 @@ public class IkadaManager : TileManager
                 switch (str)
                 {
                     case "..":
-                        tileobj = Instantiate(WaterTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as TileObject;
+                        tileobj = Instantiate<TileObject>(WaterTile, GetPositionFromPuzzlePosition(x, y), new Quaternion());
                         tileobj.tile = new Tile(Tile.TileType.Water);
                         break;
                     case "##":
-                        tileobj = Instantiate(WallTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as TileObject;
-                        tileobj.tile = new Tile(Tile.TileType.Wall); break;
+                        tileobj = Instantiate<TileObject>(WallTile, GetPositionFromPuzzlePosition(x, y), new Quaternion());
+                        tileobj.tile = new Tile(Tile.TileType.Wall);
+                        break;
                     case "[]":
-                        tileobj = Instantiate(FloorTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as TileObject;
-                        tileobj.tile = new Tile(Tile.TileType.Normal); break;
+                        tileobj = Instantiate<TileObject>(FloorTile, GetPositionFromPuzzlePosition(x, y), new Quaternion());
+                        tileobj.tile = new Tile(Tile.TileType.Normal);
+                        if (x == 0)
+                        {
+                            var goal = Instantiate<GameObject>(GoalTarget);
+                            goal.transform.SetParent(tileobj.transform);
+                            goal.transform.localPosition = new Vector3(0, 0.7f, 0);
+                        }
+
+                        break;
                     default:
                         tileobj = Instantiate(IkadalTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as TileObject;
                         var In = AlphabetLib.FromAlphabetToBool5(str[0]);
@@ -286,7 +299,7 @@ public class IkadaManager : TileManager
         if (px != w - 1) return;
         isComingPlayer = false;
         GameObject.Find("Reset/Text").GetComponent<Text>().text = "リセット\n(Xキー)";
-        GameObject.Find("BackScene/Text").GetComponent<Text>().text = BackSceneText();
+        GameObject.Find("BackScene/Text").GetComponent<Text>().text = BackSceneText;
         if (UIGo.gameObject.activeSelf) UIGo.Vanish();
         SetCamera(false);
         VanishTiles();
@@ -339,7 +352,7 @@ public class IkadaManager : TileManager
         if (isComingPlayer)
         {
             GameObject.Find("Reset/Text").GetComponent<Text>().text = "リセット";
-            GameObject.Find("BackScene/Text").GetComponent<Text>().text = BackSceneText() + "\n(Xキー)";
+            GameObject.Find("BackScene/Text").GetComponent<Text>().text = BackSceneText + "\n(Xキー)";
             if (Input.GetKeyDown(KeyCode.X))
                 GameObject.Find("BackScene").GetComponent<Button>().onClick.Invoke();
             else ComePlayer();
