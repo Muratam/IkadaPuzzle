@@ -4,13 +4,8 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System;
 
-public struct Vec2 { public int x, y; public Vec2(int _x, int _y) { x = _x; y = _y; } };
-public struct Pair<T> { public T x, y; public Pair(T _x, T _y) { x = _x; y = _y; } };
-
-
 public class IkadaManager : TileManager
 {
-
     public static int StageMax { get { return SystemData.StageName.Length; } }
     private static int currentStageIndex = 0;
     public static int CurrentStageIndex
@@ -27,15 +22,15 @@ public class IkadaManager : TileManager
 
     protected GameObject gocamera;
     protected LerpTransform lerpPlayer;
-    protected static string DATA_MOVEDTIME(int index) { return "MovedTime" + index; }
-    protected static string DATA_CURRENTINDEX { get { return "CurrentIndex"; } }
+    protected static string DataMovedTime(int index) { return "MovedTime" + index; }
+    protected static string DataCurrentIndex { get { return "CurrentIndex"; } }
     public enum PlayMode { Story, Edit, Online }
     public PlayMode CurrentMode
     {
         get
         {
             if (EditStageData.Current != null) return PlayMode.Edit;
-            else if (OnlineStageManager.OnlineStages_Name_Data != null) return PlayMode.Online;
+            else if (OnlineStageSelectManager.OnlineStageInfos != null) return PlayMode.Online;
             else return PlayMode.Story;
         }
     }
@@ -55,12 +50,14 @@ public class IkadaManager : TileManager
     {
         if (this.viewIsFromPlayer == viewIsFromPlayer) return;
         this.viewIsFromPlayer = viewIsFromPlayer;
-        var playerView = new Pair<Vector3>(new Vector3(0, 4, -4f), new Vector3(30, 0, 0));
-        var normalView = new Pair<Vector3>(new Vector3(-0.2f, 9.5f, -0.3f), new Vector3(90, 270, 0));
+        var playerEulerAngle = new Vector3(30, 0, 0);
+        var normalEulerAngle = new Vector3(90, 270, 0);
+        var playerPosition = new Vector3(0, 4, -4f);
+        var normalPosition = new Vector3(-0.2f, 9.5f, -0.3f);
         var lerp = gocamera.GetComponent<LerpTransform>();
         lerp.SetParent(viewIsFromPlayer ? Player.transform : null);
-        lerp.EulerAngles = viewIsFromPlayer ? playerView.y : normalView.y;
-        lerp.LocalPosition = viewIsFromPlayer ? playerView.x : normalView.x;
+        lerp.EulerAngles = viewIsFromPlayer ? playerEulerAngle : normalEulerAngle;
+        lerp.LocalPosition = viewIsFromPlayer ? playerPosition : normalPosition;
     }
     protected void SetLighting()
     {
@@ -70,7 +67,7 @@ public class IkadaManager : TileManager
     }
 
     static readonly Vector3 DisFloatdiffVec = new Vector3(0, -0.5f, 0);
-    protected void SummonTiles(Queue<Vec2> poses, GameObject go, float lerpTime = 0.15f, Vector3 diffVec = new Vector3())
+    protected void SummonTiles(Queue<Pos> poses, GameObject go, float lerpTime = 0.15f, Vector3 diffVec = new Vector3())
     {
         if (poses.Count == 0) return;
         var pos = poses.Dequeue();
@@ -168,7 +165,7 @@ public class IkadaManager : TileManager
         else if (CurrentMode == PlayMode.Edit)
             InitialStrTileMap = EditStageData.Current.MakeUpStageMap();
         else
-            InitialStrTileMap = SystemData.ConvertStageMap(OnlineStageManager.OnlineStage.y);
+            InitialStrTileMap = SystemData.ConvertStageMap(OnlineStageSelectManager.OnlineStage.StageMap);
         foreach (var t in Tiles) if (t != null) Destroy(t.gameObject);
         foreach (var x in Enumerable.Range(0, w))
         {
@@ -213,14 +210,14 @@ public class IkadaManager : TileManager
         UIGo.gameObject.SetActive(true);
         UIGo.ReStart();
         UIGo.GetComponent<AudioSource>().Play();
-        Queue<Vec2> pos = new Queue<Vec2>();
-        foreach (var i in Enumerable.Range(0, 8)) pos.Enqueue(new Vec2(px - i, py));
+        Queue<Pos> pos = new Queue<Pos>();
+        foreach (var i in Enumerable.Range(0, 8)) pos.Enqueue(new Pos(px - i, py));
         SummonTiles(pos, FloorTile.gameObject, 0.3f);
-        StaticSaveData.Set(DATA_CURRENTINDEX, CurrentStageIndex);
+        StaticSaveData.Set(DataCurrentIndex, CurrentStageIndex);
         GameObject.Find("StageIndex/Text").GetComponent<Text>().text
             = CurrentMode == PlayMode.Story ? "Stage " + CurrentStageIndex
             : CurrentMode == PlayMode.Edit ? EditStageData.Current.Name
-            : OnlineStageManager.OnlineStage.x;
+            : OnlineStageSelectManager.OnlineStage.StageName;
         SetCamera(true);
         SetLighting();
         MovedTime = 0;
@@ -323,16 +320,16 @@ public class IkadaManager : TileManager
         UIClear.GetComponent<AudioSource>().Play();
         lerpPlayer.EulerAngles = new Vector3(0, 180, 0);
         prePlayerDirection = new Across(false, true, false, false, false);
-        Queue<Vec2> pos = new Queue<Vec2>();
+        Queue<Pos> pos = new Queue<Pos>();
         foreach (var i in Enumerable.Range(0, 20))
-            pos.Enqueue(new Vec2(px - i, py));
+            pos.Enqueue(new Pos(px - i, py));
         SummonTiles(pos, FloorTile.gameObject, 0.3f);
         SetCamera(true);
         if (CurrentMode == PlayMode.Story)
         {
-            int oldTime; StaticSaveData.Get(DATA_MOVEDTIME(CurrentStageIndex), out oldTime);
+            int oldTime; StaticSaveData.Get(DataMovedTime(CurrentStageIndex), out oldTime);
             if (oldTime == 0 || MovedTime < oldTime)
-                StaticSaveData.Set(DATA_MOVEDTIME(CurrentStageIndex), MovedTime);
+                StaticSaveData.Set(DataMovedTime(CurrentStageIndex), MovedTime);
         }
     }
 

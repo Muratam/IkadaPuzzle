@@ -4,9 +4,20 @@ using UnityEngine.UI;
 using System.Linq;
 
 // ステージセレクト画面
+public struct StageInfo
+{
+    public string StageName;
+    public string StageMap;
+    public StageInfo(string stageName, string stageMap)
+    {
+        this.StageName = stageName;
+        this.StageMap = stageMap;
+    }
+};
+
 public class SceneSelectManager : MonoBehaviour
 {
-    public static List<Pair<string>> EditStages_Name_Data = null;
+    public static List<StageInfo> EditStageInfos = null;
     GameObject audio;
     [SerializeField] Button BnToStoryMode = null;
     [SerializeField] Button BnToEditMode = null;
@@ -15,13 +26,13 @@ public class SceneSelectManager : MonoBehaviour
     void GoToStoryMode()
     {
         EditStageData.Current = null;
-        EditStages_Name_Data = null;
+        EditStageInfos = null;
         Application.LoadLevel("StageSelect");
     }
     void GotoEditMode()
     {
         EditStageData.Current = null;
-        EditStages_Name_Data = null;
+        EditStageInfos = null;
         Application.LoadLevel("StageEdit");
     }
     void GotoOnlineMode()
@@ -35,24 +46,21 @@ public class SceneSelectManager : MonoBehaviour
                 MessageText.text = "ステージの取得に\n失敗しました。\n\n接続を確認して\n再度アクセス\nしてください";
                 return;
             }
-            if (EditStages_Name_Data == null) EditStages_Name_Data = new List<Pair<string>>();
-            EditStages_Name_Data.Clear();
+            if (EditStageInfos == null) EditStageInfos = new List<StageInfo>();
+            EditStageInfos.Clear();
             foreach (var line in dic)
             {
                 if (line.Key == "result") continue;
                 if (!(line.Value is Dictionary<string, object>)) continue;
                 var stageData = (Dictionary<string, object>)line.Value;
-                EditStages_Name_Data.Add(new Pair<string>((string)stageData["stage_name"], (string)stageData["stage"]));
-                //stageData.Key..."id", "stage_name", "stage"
-                //stageData.Valueはobject型なので、型変換が必要なので注意。たぶん。
-                //Debug.Log(line.Key + ":StageName:" + stageData["stage_name"]);
+                EditStageInfos.Add(new StageInfo((string)stageData["stage_name"], (string)stageData["stage"]));
             }
-            if (EditStages_Name_Data.Count > 24)
+            if (EditStageInfos.Count > 24)
             {
-                var copy = EditStages_Name_Data.ToArray();
-                EditStages_Name_Data.Clear();
+                var copy = EditStageInfos.ToArray();
+                EditStageInfos.Clear();
                 int max = Mathf.Min(24, copy.Length);
-                foreach (var i in Enumerable.Range(0, max)) EditStages_Name_Data.Add(copy[copy.Length - 1 - i]);
+                foreach (var i in Enumerable.Range(0, max)) EditStageInfos.Add(copy[copy.Length - 1 - i]);
             }
             EditStageData.Current = null;
             Application.LoadLevel("OnlineStage");

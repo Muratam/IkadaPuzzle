@@ -9,26 +9,20 @@ public class StageSelectManager : IkadaManager
     protected static readonly Vector3 WallFloorDiffVec = new Vector3(0, -0.5f, 0);
     [SerializeField] protected TransitionUI UIs;
     protected int[] MovedTime = new int[StageMax];
+    protected virtual int TileLen => StageMax;
+    protected virtual int CurrentTile => CurrentStageIndex;
     protected virtual void InitTiles()
     {
-        foreach (var i in Enumerable.Range(0, StageMax))
+        foreach (var i in Enumerable.Range(0, TileLen))
         {
             var floor = Instantiate(WallTile, GetPositionFromPuzzlePosition(i, h / 2) + WallFloorDiffVec, new Quaternion()) as TileObject;
             floor.transform.SetParent(Stage.transform);
         }
-        px = CurrentStageIndex; py = h / 2;
+        px = CurrentTile; py = h / 2;
         Player.transform.position = GetPositionFromPuzzlePosition(px, py);
     }
-
-    protected virtual void Awake()
+    protected void SetUp()
     {
-        {
-            int ci;
-            StaticSaveData.Get(DATA_CURRENTINDEX, out ci);
-            CurrentStageIndex = ci;
-        }
-        foreach (var i in Enumerable.Range(0, StageMax))
-            StaticSaveData.Get(DATA_MOVEDTIME(i), out MovedTime[i]);
         Player = GameObject.Find("Player");
         lerpPlayer = Player.GetComponent<LerpTransform>();
         gocamera = GameObject.Find("Main Camera");
@@ -44,31 +38,38 @@ public class StageSelectManager : IkadaManager
         lerpPlayer.Init(true);
         SetUI();
     }
-    protected int predx = 1;
+    void Awake()
+    {
+        {
+            int ci;
+            StaticSaveData.Get(DataCurrentIndex, out ci);
+            CurrentStageIndex = ci;
+        }
+        foreach (var i in Enumerable.Range(0, StageMax))
+            StaticSaveData.Get(DataMovedTime(i), out MovedTime[i]);
+        SetUp();
+    }
     protected GameObject TransParticle;
     protected bool LerpFinishedOnce = false;
     protected virtual void MovePlayer()
     {
         if (!lerpPlayer.LerpFinished) return;
-        if (!LerpFinishedOnce)
-        {
-            LerpFinishedOnce = true;
-            //SetLighting();
-        }
-        int dx = Input.GetKey(KeyCode.RightArrow) ? 1 :
-                    Input.GetKey(KeyCode.LeftArrow) ? -1 : 0;
+        if (!LerpFinishedOnce) LerpFinishedOnce = true;
+        int dx = Input.GetKey(KeyCode.RightArrow) ? 1 : Input.GetKey(KeyCode.LeftArrow) ? -1 : 0;
         if (dx == 0) return;
         if (dx == -1 && px == 0) return;
         if (dx == 1 && px == StageMax - 1) return;
         px += dx;
-        lerpPlayer.EulerAngles = new Vector3(0, dx == predx ? 0 : 180, 0);
+        lerpPlayer.EulerAngles = new Vector3(0, dx == 1 ? 0 : 180, 0);
         lerpPlayer.Position = GetPositionFromPuzzlePosition(px, py);
         CurrentStageIndex = px;
-        predx = dx;
         SetUI();
     }
+
+    protected virtual string StageNameString => SystemData.StageName[CurrentStageIndex].Replace(".txt", "");
     protected virtual void SetUI()
     {
+        Debug.Log($"Stage {CurrentStageIndex}");
         SetLighting();
         var UIs = GameObject.Find("UIs").GetComponent<TransitionUI>();
         UIs.name = "OldUIs";
@@ -76,9 +77,12 @@ public class StageSelectManager : IkadaManager
         UIs2.name = "UIs";
         UIs2.AwakePosition = UIs.AwakePosition;
         UIs2.transform.SetParent(UIs.transform.parent);
-        GameObject.Find("UIs/StageIndex").GetComponent<Text>().text = "Stage " + CurrentStageIndex;
-        GameObject.Find("UIs/StageName").GetComponent<Text>().text = SystemData.StageName[CurrentStageIndex].Replace(".txt", "");
-        GameObject.Find("UIs/MovedTime").GetComponent<Text>().text = MovedTime[CurrentStageIndex] == 0 ? "--" : "" + MovedTime[CurrentStageIndex];
+        var StageIndexText = GameObject.Find("UIs/StageIndex");
+        if (StageIndexText != null) StageIndexText.GetComponent<Text>().text = "Stage " + CurrentStageIndex;
+        var StageNameText = GameObject.Find("UIs/StageName");
+        if (StageNameText != null) StageNameText.GetComponent<Text>().text = StageNameString;
+        var MovedTimeText = GameObject.Find("UIs/MovedTime");
+        if (MovedTimeText != null) MovedTimeText.GetComponent<Text>().text = MovedTime[CurrentStageIndex] == 0 ? "--" : "" + MovedTime[CurrentStageIndex];
         UIs.Vanish();
     }
 
@@ -93,7 +97,7 @@ public class StageSelectManager : IkadaManager
         if (py == h / 2 + 7 - 1) TransParticle.SetActive(true);
         else if (py == h / 2 + 7) Application.LoadLevel("Template");
     }
-    protected virtual void Update()
+    void Update()
     {
         if (alreadyStageSelected)
         {
@@ -104,10 +108,10 @@ public class StageSelectManager : IkadaManager
         if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.Return))
         {
             alreadyStageSelected = true;
-            Queue<Vec2> pos = new Queue<Vec2>();
-            foreach (var i in Enumerable.Range(0, 15)) pos.Enqueue(new Vec2(px, py + 1 + i));
+            var pos = new Queue<Pos>();
+            foreach (var i in Enumerable.Range(0, 15)) pos.Enqueue(new Pos(px, py + 1 + i));
             SummonTiles(pos, WallTile.gameObject, 0.25f, WallFloorDiffVec);
-            lerpPlayer.EulerAngles = new Vector3(0, predx * -90, 0);
+            lerpPlayer.EulerAngles = new Vector3(0, -90, 0);
             DecidedTime = Time.time;
         }
         else if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.X)) Application.LoadLevel("SceneSelect");
