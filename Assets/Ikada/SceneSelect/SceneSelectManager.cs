@@ -63,6 +63,7 @@ public class SceneSelectManager : MonoBehaviour
                 foreach (var i in Enumerable.Range(0, max)) EditStageInfos.Add(copy[copy.Length - 1 - i]);
             }
             EditStageData.Current = null;
+            // Debug.Log("EditStageCount:" + EditStageInfos.Count);
             Application.LoadLevel("OnlineStage");
         }));
     }

@@ -25,6 +25,19 @@ public class OnlineStageSelectManager : StageSelectManager
         SetUp();
     }
     protected override int TileLen => OnlineStageMax;
-    protected override int CurrentTile => OnlineCurrentStageIndex;
-    protected override string StageNameString => OnlineStage.StageName;
+    protected override int CurrentTile
+    {
+        get { return OnlineCurrentStageIndex; }
+        set { OnlineCurrentStageIndex = value; }
+    }
+
+    protected override string StageNameString
+    {
+        get
+        {
+            Debug.Log(OnlineCurrentStageIndex);
+            Debug.Log(OnlineStage.StageName);
+            return OnlineStage.StageName;
+        }
+    }
 }

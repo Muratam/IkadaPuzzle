@@ -13,7 +13,11 @@ public class StageSelectManager : StageManager
     [SerializeField] TransitionUI UIs;
     int[] MovedTime = new int[StageMax];
     protected virtual int TileLen => StageMax;
-    protected virtual int CurrentTile => CurrentStageIndex;
+    protected virtual int CurrentTile
+    {
+        get { return CurrentStageIndex; }
+        set { CurrentStageIndex = value; }
+    }
     protected virtual string StageNameString => SystemData.StageName[CurrentStageIndex].Replace(".txt", "");
     void InitTiles()
     {
@@ -66,13 +70,12 @@ public class StageSelectManager : StageManager
         px += dx;
         lerpPlayer.EulerAngles = new Vector3(0, dx == 1 ? 0 : 180, 0);
         lerpPlayer.Position = GetPositionFromPuzzlePosition(px, py);
-        CurrentStageIndex = px;
+        CurrentTile = px;
         SetUI();
     }
 
     void SetUI()
     {
-        Debug.Log($"Stage {CurrentStageIndex}");
         SetLighting();
         var UIs = GameObject.Find("UIs").GetComponent<TransitionUI>();
         UIs.name = "OldUIs";
@@ -81,7 +84,7 @@ public class StageSelectManager : StageManager
         UIs2.AwakePosition = UIs.AwakePosition;
         UIs2.transform.SetParent(UIs.transform.parent);
         var StageIndexText = GameObject.Find("UIs/StageIndex");
-        if (StageIndexText != null) StageIndexText.GetComponent<Text>().text = "Stage " + CurrentStageIndex;
+        if (StageIndexText != null) StageIndexText.GetComponent<Text>().text = "Stage " + CurrentTile;
         var StageNameText = GameObject.Find("UIs/StageName");
         if (StageNameText != null) StageNameText.GetComponent<Text>().text = StageNameString;
         var MovedTimeText = GameObject.Find("UIs/MovedTime");
