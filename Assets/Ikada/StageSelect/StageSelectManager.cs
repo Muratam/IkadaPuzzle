@@ -66,7 +66,7 @@ public class StageSelectManager : StageManager
         int dx = Input.GetKey(KeyCode.RightArrow) ? 1 : Input.GetKey(KeyCode.LeftArrow) ? -1 : 0;
         if (dx == 0) return;
         if (dx == -1 && px == 0) return;
-        if (dx == 1 && px == StageMax - 1) return;
+        if (dx == 1 && px == TileLen - 1) return;
         px += dx;
         lerpPlayer.EulerAngles = new Vector3(0, dx == 1 ? 0 : 180, 0);
         lerpPlayer.Position = GetPositionFromPuzzlePosition(px, py);
