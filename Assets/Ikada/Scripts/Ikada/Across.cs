@@ -5,6 +5,7 @@ using System;
 // 筏の端8方向+真ん中に対応した移動を管理する
 // 内部的には 3x3の{0,1}の行列。
 
+
 public class Across
 {
     public readonly bool[,] Mat = new bool[3, 3];
