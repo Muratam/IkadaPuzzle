@@ -65,8 +65,18 @@ public class IkadaCore : MonoBehaviour
         Tiles[x2, y2] = tmp;
         Tiles[x1, y1].transform.position = GetPositionFromPuzzlePosition(x1, y1);
         Tiles[x2, y2].transform.position = GetPositionFromPuzzlePosition(x2, y2);
-        Tiles[x1, y1].ForClickX = x1; Tiles[x1, y1].ForClickY = y1;
-        Tiles[x2, y2].ForClickX = x2; Tiles[x2, y2].ForClickY = y2;
+        var e1 = Tiles[x1, y1].GetComponent<EditableTileObject>();
+        if (e1 != null)
+        {
+            e1.ForClickX = x1;
+            e1.ForClickY = y1;
+        }
+        var e2 = Tiles[x2, y2].GetComponent<EditableTileObject>();
+        if (e2 != null)
+        {
+            e2.ForClickX = x2;
+            e2.ForClickY = y2;
+        }
     }
     protected bool IsInRange(int x, int y) { return (x >= 0 && y >= 0 && x < Tiles.GetLength(0) && y < Tiles.GetLength(1)); }
 

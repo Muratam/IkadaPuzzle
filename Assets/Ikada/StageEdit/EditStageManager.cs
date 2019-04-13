@@ -11,17 +11,17 @@ public class EditStageManager : IkadaCore
 {
     EditStageData[] EditStageDatas = new EditStageData[10];
     int EditStageMax => EditStageDatas.Length;
-    [SerializeField] TileObject IkadalTile;
-    [SerializeField] TileObject FloorTile;
-    [SerializeField] TileObject WallTile;
-    [SerializeField] TileObject WaterTile;
+    [SerializeField] EditableTileObject IkadalTile;
+    [SerializeField] EditableTileObject FloorTile;
+    [SerializeField] EditableTileObject WallTile;
+    [SerializeField] EditableTileObject WaterTile;
     [SerializeField] GameObject Stage;
     [SerializeField] GameObject Player;
 
     GameObject FileList;
     GameObject FileElm;
     InputField WriteInput;
-    TileObject EditTile;
+    EditableTileObject EditTile;
 
     void FileListOpen()
     {
@@ -154,21 +154,21 @@ public class EditStageManager : IkadaCore
             foreach (var y in Enumerable.Range(0, h))
             {
                 string str = InitialStrTileMap[x, y];
-                TileObject tileobj;
+                EditableTileObject tileobj;
                 switch (str)
                 {
                     case "..":
-                        tileobj = Instantiate(WaterTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as TileObject;
+                        tileobj = Instantiate(WaterTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as EditableTileObject;
                         tileobj.Tile = new Tile(Tile.TileType.Water);
                         break;
                     case "##":
-                        tileobj = Instantiate(WallTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as TileObject;
+                        tileobj = Instantiate(WallTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as EditableTileObject;
                         tileobj.Tile = new Tile(Tile.TileType.Wall); break;
                     case "[]":
-                        tileobj = Instantiate(FloorTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as TileObject;
+                        tileobj = Instantiate(FloorTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as EditableTileObject;
                         tileobj.Tile = new Tile(Tile.TileType.Normal); break;
                     default:
-                        tileobj = Instantiate(IkadalTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as TileObject;
+                        tileobj = Instantiate(IkadalTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as EditableTileObject;
                         var In = AlphabetLib.FromAlphabetToBool5(str[0]);
                         var inacross = new Across(In[0], In[1], In[2], In[3], In[4]);
                         var Ex = AlphabetLib.FromAlphabetToBool5(str[1]);
@@ -193,10 +193,10 @@ public class EditStageManager : IkadaCore
         px = w - 1; py = h - 1;
         Player.transform.position = GetPositionFromPuzzlePosition(w - 1, h - 1);
     }
-    void SwitchTile(TileObject tileobj, int x, int y)
+    void SwitchTile(EditableTileObject tileobj, int x, int y)
     {
-        TileObject newTileObj = IkadalTile;
-        Tile.TileType newTileType = Tile.TileType.Ikada;
+        var newTileObj = IkadalTile;
+        var newTileType = Tile.TileType.Ikada;
         switch (tileobj.Tile.tileType)
         {
             case Tile.TileType.Normal: newTileType = Tile.TileType.Wall; newTileObj = WallTile; break;
@@ -204,7 +204,7 @@ public class EditStageManager : IkadaCore
             case Tile.TileType.Ikada: newTileType = Tile.TileType.Water; newTileObj = WaterTile; break;
             case Tile.TileType.Wall: newTileType = Tile.TileType.Ikada; newTileObj = IkadalTile; break;
         }
-        newTileObj = Instantiate(newTileObj, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as TileObject;
+        newTileObj = Instantiate(newTileObj, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as EditableTileObject;
         newTileObj.Tile = new Tile(newTileType, new Across(true), new Across(true));
         newTileObj.transform.SetParent(Stage.transform);
         newTileObj.SetInitButtonState();
@@ -218,7 +218,7 @@ public class EditStageManager : IkadaCore
         Tiles[x, y] = newTileObj;
         Destroy(tileobj.gameObject);
     }
-    void AddButtonClick(TileObject tileobj, Button b)
+    void AddButtonClick(EditableTileObject tileobj, Button b)
     {
         b.onClick.AddListener(() =>
         {
