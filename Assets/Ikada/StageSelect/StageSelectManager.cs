@@ -103,7 +103,7 @@ public class StageSelectManager : MonoBehaviour
         if (StageIndexText != null) StageIndexText.GetComponent<Text>().text = "Stage " + CurrentTile;
         var StageNameText = GameObject.Find("UIs/StageName");
         if (StageNameText != null) StageNameText.GetComponent<Text>().text = StageNameString;
-        var MovedTimeText = GameObject.Find("UIs/movedTime");
+        var MovedTimeText = GameObject.Find("UIs/MovedTime");
         if (MovedTimeText != null)
         {
             var text = "--";
