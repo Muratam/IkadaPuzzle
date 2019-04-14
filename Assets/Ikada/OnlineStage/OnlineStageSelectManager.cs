@@ -19,25 +19,16 @@ public class OnlineStageSelectManager : StageSelectManager
             onLineCurrentStageIndex = value;
         }
     }
-    public static StageInfo OnlineStage => SceneSelectManager.EditStageInfos[OnlineCurrentStageIndex];
     void Awake()
     {
         SetUp();
     }
+    public static StageInfo OnlineStage => SceneSelectManager.EditStageInfos[OnlineCurrentStageIndex];
+    protected override string StageNameString => OnlineStage.Name;
     protected override int TileLen => OnlineStageMax;
     protected override int CurrentTile
     {
         get { return OnlineCurrentStageIndex; }
         set { OnlineCurrentStageIndex = value; }
-    }
-
-    protected override string StageNameString
-    {
-        get
-        {
-            Debug.Log(OnlineCurrentStageIndex);
-            Debug.Log(OnlineStage.StageName);
-            return OnlineStage.StageName;
-        }
     }
 }

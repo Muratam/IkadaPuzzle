@@ -11,13 +11,19 @@ public class EditStageManager : IkadaCore
 {
     EditStageData[] EditStageDatas = new EditStageData[10];
     int EditStageMax => EditStageDatas.Length;
+    [SerializeField] EditableTileObject IkadalTile;
+    [SerializeField] EditableTileObject FloorTile;
+    [SerializeField] EditableTileObject WallTile;
+    [SerializeField] EditableTileObject WaterTile;
+    [SerializeField] GameObject Stage;
+    [SerializeField] GameObject Player;
 
     GameObject FileList;
     GameObject FileElm;
     InputField WriteInput;
-    TileObject EditTile;
+    EditableTileObject EditTile;
 
-    void FileListOpen()
+    void OpenFileList()
     {
         FileList.transform.parent.gameObject.SetActive(true);
         foreach (var c in FileList.GetComponentsInChildren<Button>()) { if (c.gameObject.name == "temp") Destroy(c.gameObject); }
@@ -31,14 +37,14 @@ public class EditStageManager : IkadaCore
             fe.GetComponent<Button>().onClick.AddListener(() =>
             {
                 InitTiles(f);//"IkadaData/" + f);
-                FileListClose();
+                CloseFileList();
             });
         });
         FileList.GetComponent<RectTransform>().sizeDelta =
             new Vector2(FileList.GetComponent<RectTransform>().sizeDelta.x,
                         Mathf.Max(72 * (files.Length + 1) * 1.3f, 72 * 1.3f * 9));
     }
-    void FileListClose()
+    void CloseFileList()
     {
         FileList.transform.parent.gameObject.SetActive(false);
     }
@@ -58,15 +64,15 @@ public class EditStageManager : IkadaCore
     {
         FileList = GameObject.Find("FileList");
         FileElm = GameObject.Find("FileList/FileElm");
-        FileElm.GetComponent<Button>().onClick.AddListener(() => { FileListClose(); });
+        FileElm.GetComponent<Button>().onClick.AddListener(() => { CloseFileList(); });
         WriteInput = GameObject.Find("WriteInput").GetComponent<InputField>();
         MessageUI = GameObject.Find("Message").GetComponent<TransitionUI>(); MessageUI.gameObject.SetActive(false);
-        GameObject.Find("Read").GetComponent<Button>().onClick.AddListener(() => { FileListOpen(); });
+        GameObject.Find("Read").GetComponent<Button>().onClick.AddListener(() => { OpenFileList(); });
         GameObject.Find("Write").GetComponent<Button>().onClick.AddListener(() =>
         {
-            EditStageData.Current.SetUpStageMap(Tiles);
+            EditStageData.Current.StageMap = StageMapUtil.TileObjsToString(Tiles);
             EditStageData.Current.Name = WriteInput.text == "" ? "Stage" + EditStageData.Current.LocalID : WriteInput.text;
-            EditStageData.Current.SetMembers();
+            EditStageData.Current.Save();
             ShowMessage("ステージを\n 保存しました。");
             Debug.Log("Saved");
         });
@@ -89,7 +95,7 @@ public class EditStageManager : IkadaCore
                 }
                 else
                     ShowMessage("失敗しました。\n\nステージ名が\n被っているかも\nしれません。\n\n通信環境も\n確認ください\nまた、全く同じ\nステージは\n投稿出来ません");
-                EditStageData.Current.SetMembers();
+                EditStageData.Current.Save();
             }, EditStageData.Current.Name, EditStageData.Current.StageMap, EditStageData.Current.ServerID));
         });
         GameObject.Find("Canvas/BackScene").GetComponent<Button>().onClick.AddListener(() =>
@@ -97,7 +103,6 @@ public class EditStageManager : IkadaCore
             Application.LoadLevel("SceneSelect");
         });
         FileList.transform.parent.gameObject.SetActive(false);
-        Player = GameObject.Find("Canvas/Player");
         foreach (var i in Enumerable.Range(0, EditStageMax))
             EditStageDatas[i] = new EditStageData(i);
         InitTiles(EditStageDatas[0]);
@@ -133,11 +138,13 @@ public class EditStageManager : IkadaCore
         else if (Input.anyKeyDown) HideMessage();
     }
 
+    string[,] InitialStrTileMap;
     void InitTiles(EditStageData est)
     {
         if (est != null)
         {
-            InitialStrTileMap = est.MakeUpStageMap();
+            EditStageData.Current = est;
+            InitialStrTileMap = StageMapUtil.Split(est.StageMap);
             WriteInput.text = est.Name;
         }
         foreach (var t in Tiles) if (t != null) Destroy(t.gameObject);
@@ -147,26 +154,26 @@ public class EditStageManager : IkadaCore
             foreach (var y in Enumerable.Range(0, h))
             {
                 string str = InitialStrTileMap[x, y];
-                TileObject tileobj;
+                EditableTileObject tileobj;
                 switch (str)
                 {
                     case "..":
-                        tileobj = Instantiate(WaterTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as TileObject;
-                        tileobj.tile = new Tile(Tile.TileType.Water);
+                        tileobj = Instantiate(WaterTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as EditableTileObject;
+                        tileobj.Tile = new Tile(Tile.TileType.Water);
                         break;
                     case "##":
-                        tileobj = Instantiate(WallTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as TileObject;
-                        tileobj.tile = new Tile(Tile.TileType.Wall); break;
+                        tileobj = Instantiate(WallTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as EditableTileObject;
+                        tileobj.Tile = new Tile(Tile.TileType.Wall); break;
                     case "[]":
-                        tileobj = Instantiate(FloorTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as TileObject;
-                        tileobj.tile = new Tile(Tile.TileType.Normal); break;
+                        tileobj = Instantiate(FloorTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as EditableTileObject;
+                        tileobj.Tile = new Tile(Tile.TileType.Normal); break;
                     default:
-                        tileobj = Instantiate(IkadalTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as TileObject;
+                        tileobj = Instantiate(IkadalTile, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as EditableTileObject;
                         var In = AlphabetLib.FromAlphabetToBool5(str[0]);
-                        Across inacross = new Across(In[0], In[1], In[2], In[3], In[4]);
+                        var inacross = new Across(In[0], In[1], In[2], In[3], In[4]);
                         var Ex = AlphabetLib.FromAlphabetToBool5(str[1]);
-                        Across exacross = new Across(Ex[0], Ex[1], Ex[2], Ex[3], Ex[4]);
-                        tileobj.tile = new Tile(Tile.TileType.Ikada, inacross, exacross);
+                        var exacross = new Across(Ex[0], Ex[1], Ex[2], Ex[3], Ex[4]);
+                        tileobj.Tile = new Tile(Tile.TileType.Ikada, inacross, exacross);
                         tileobj.GetComponentsInChildren<Button>().ToList().ForEach(b => AddButtonClick(tileobj, b));
                         break;
                 }
@@ -186,7 +193,55 @@ public class EditStageManager : IkadaCore
         px = w - 1; py = h - 1;
         Player.transform.position = GetPositionFromPuzzlePosition(w - 1, h - 1);
     }
-
+    void SwitchTile(EditableTileObject tileobj, int x, int y)
+    {
+        var newTileObj = IkadalTile;
+        var newTileType = Tile.TileType.Ikada;
+        switch (tileobj.Tile.tileType)
+        {
+            case Tile.TileType.Normal: newTileType = Tile.TileType.Wall; newTileObj = WallTile; break;
+            case Tile.TileType.Water: newTileType = Tile.TileType.Normal; newTileObj = FloorTile; break;
+            case Tile.TileType.Ikada: newTileType = Tile.TileType.Water; newTileObj = WaterTile; break;
+            case Tile.TileType.Wall: newTileType = Tile.TileType.Ikada; newTileObj = IkadalTile; break;
+        }
+        newTileObj = Instantiate(newTileObj, GetPositionFromPuzzlePosition(x, y), new Quaternion()) as EditableTileObject;
+        newTileObj.Tile = new Tile(newTileType, new Across(true), new Across(true));
+        newTileObj.transform.SetParent(Stage.transform);
+        newTileObj.SetInitButtonState();
+        if (newTileType == Tile.TileType.Ikada)
+            newTileObj.GetComponentsInChildren<Button>().ToList().ForEach(b => AddButtonClick(newTileObj, b));
+        newTileObj.ForClickX = x; newTileObj.ForClickY = y;
+        newTileObj.GetComponent<Button>().onClick.AddListener(() =>
+        {
+            SwitchTile(newTileObj, newTileObj.ForClickX, newTileObj.ForClickY);
+        });
+        Tiles[x, y] = newTileObj;
+        Destroy(tileobj.gameObject);
+    }
+    void AddButtonClick(EditableTileObject tileobj, Button b)
+    {
+        b.onClick.AddListener(() =>
+        {
+            var c = b.image.color;
+            var ia = tileobj.Tile.InAcross;
+            var ea = tileobj.Tile.ExAcross;
+            if (b.name[0] == 'i')
+            {
+                bool[] ac = ia.GetRLTBC();
+                ac[b.name[1] - '0'] = !ac[b.name[1] - '0'];
+                tileobj.Tile = new Tile(Tile.TileType.Ikada,
+                    new Across(ac[0], ac[1], ac[2], ac[3], ac[4]), ea);
+            }
+            else if (b.name[0] == 'e')
+            {
+                bool[] ac = ea.GetRLTBC();
+                ac[b.name[1] - '0'] = !ac[b.name[1] - '0'];
+                tileobj.Tile = new Tile(Tile.TileType.Ikada,
+                    ia, new Across(ac[0], ac[1], ac[2], ac[3], ac[4]));
+            }
+            tileobj.SetInitButtonState();
+        });
+    }
     void UpdateMap()
     {
         Player.transform.position = GetPositionFromPuzzlePosition(px, py);

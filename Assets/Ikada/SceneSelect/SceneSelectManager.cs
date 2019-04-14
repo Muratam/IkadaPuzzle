@@ -4,17 +4,6 @@ using UnityEngine.UI;
 using System.Linq;
 
 // ステージセレクト画面
-public struct StageInfo
-{
-    public string StageName;
-    public string StageMap;
-    public StageInfo(string stageName, string stageMap)
-    {
-        this.StageName = stageName;
-        this.StageMap = stageMap;
-    }
-};
-
 public class SceneSelectManager : MonoBehaviour
 {
     public static List<StageInfo> EditStageInfos = null;

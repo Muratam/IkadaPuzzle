@@ -1,48 +1,29 @@
-﻿// セーブデータ
-using UnityEngine;
+﻿using UnityEngine;
 using System.IO;
 using System.Linq;
 using MiniJSON;
 using System.Collections.Generic;
 
-public static class StaticSaveData
-{
-    public static string path => saveUtil.path;
-    static SaveUtil saveUtil = new SaveUtil(Application.productName + ".dat");
-    public static bool AutoSaveWhenSetIsCalled { get { return saveUtil.AutoSaveWhenSetIsCalled; } set { saveUtil.AutoSaveWhenSetIsCalled = value; } }
-    public static void LoadData() { saveUtil.LoadData(); }
-    public static void SaveData() { saveUtil.SaveData(); }
-    public static void Set<T>(string name, T t) { saveUtil.Set(name, t); }
-    public static void Get(string name, out int t) { saveUtil.Get(name, out t); }
-    public static void Get(string name, out long t) { saveUtil.Get(name, out t); }
-    public static void Get(string name, out float t) { saveUtil.Get(name, out t); }
-    public static void Get(string name, out double t) { saveUtil.Get(name, out t); }
-    public static void Get(string name, out string t) { saveUtil.Get(name, out t); }
-    public static void Get(string name, out List<object> t) { saveUtil.Get(name, out t); }
-    public static void Get(string name, out object[] t) { saveUtil.Get(name, out t); }
-    public static void Get(string name, out Dictionary<string, object> t) { saveUtil.Get(name, out t); }
-}
 
-public class SaveUtil
+// セーブデータのパス・変換
+public class SaveData
 {
     public readonly string path = "";
+    public static SaveData Instance = new SaveData(Application.productName + ".dat");
     Dictionary<string, object> data = new Dictionary<string, object>();
-    public bool AutoSaveWhenSetIsCalled = true;
-    public SaveUtil(string DataName, bool _AutoSaveWhenSetIsCalled = true)
+    public SaveData(string DataName)
     {
-        if (Application.persistentDataPath[Application.persistentDataPath.Length - 1] != '/')
-            path = Application.persistentDataPath + "/" + DataName;
-        else path = Application.persistentDataPath + "/" + DataName;
+        path = Application.persistentDataPath + "/" + DataName;
         LoadData();
     }
-
 
     public void LoadData()
     {
         if (!File.Exists(path))
         {
             data = new Dictionary<string, object>();
-            SaveData(); return;
+            Save();
+            return;
         }
         else
         {
@@ -54,7 +35,7 @@ public class SaveUtil
         }
     }
 
-    public void SaveData()
+    public void Save()
     {
         using (FileStream f = new FileStream(path, FileMode.Create, FileAccess.Write))
         using (StreamWriter writer = new StreamWriter(f))
@@ -66,7 +47,7 @@ public class SaveUtil
     public void Set<T>(string name, T t)
     {
         data[name] = t;
-        if (AutoSaveWhenSetIsCalled) SaveData();
+        Save();
     }
     public void Get(string name, out int t)
     {
@@ -119,6 +100,7 @@ public class SaveUtil
         }
         else t = null;
     }
+
     public void Get(string name, out Dictionary<string, object> t)
     {
         if (data.ContainsKey(name))
