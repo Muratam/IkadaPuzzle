@@ -122,12 +122,12 @@ public class StageManager : IkadaCore
             else if (CurrentMode == PlayMode.Edit) Application.LoadLevel("StageEdit");
             else if (CurrentMode == PlayMode.Online) Application.LoadLevel("OnlineStage");
         });
-        GameObject.Find("Canvas/Reset").GetComponent<Button>().onClick.AddListener(() => { InitTiles(GameData.BaseStageName); });
+        GameObject.Find("Canvas/Reset").GetComponent<Button>().onClick.AddListener(() => { InitGame(GameData.BaseStageName); });
         GameObject.Find("Canvas/ToggleHide").GetComponent<Button>().onClick.AddListener(ToggleHidePlayer);
         bBackScene.transform.Find("Text").GetComponent<Text>().text = BackSceneText;
         Player.transform.SetParent(goWorld.transform);
         Stage.transform.SetParent(goWorld.transform);
-        InitTiles(GameData.BaseStageName);
+        InitGame(GameData.BaseStageName);
     }
     protected override int tileSize => 1;
     protected override Vector3 GetPositionFromPuzzlePosition(int x, int y)
@@ -157,11 +157,11 @@ public class StageManager : IkadaCore
 
     string[,] InitialStrTileMap;
 
-    void InitTiles(string FileName)
+    void InitTiles(string fileName)
     {
         if (CurrentMode == PlayMode.Story)
         {
-            if (FileName != "") InitialStrTileMap = StageMapUtil.ReadFile(FileName);
+            if (fileName != "") InitialStrTileMap = StageMapUtil.ReadFile(fileName);
         }
         else if (CurrentMode == PlayMode.Edit)
             InitialStrTileMap = StageMapUtil.Split(EditStageData.Current.StageMap);
@@ -212,7 +212,10 @@ public class StageManager : IkadaCore
         }
         px = w - 1; py = h - 1;
         px += 8;
-
+    }
+    void InitGame(string fileName)
+    {
+        InitTiles(fileName);
         LerpPlayer.Position = Player.transform.position = GetPositionFromPuzzlePosition(px, py);
         LerpPlayer.EulerAngles = new Vector3(0, 180, 0);
         prePlayerDirection = new Across(false, true, false, false, false);
@@ -232,13 +235,14 @@ public class StageManager : IkadaCore
         MovedTime = 0;
         WaitTime = Time.time;
         Hint.SetActive(false);
+        Atmosphere.AdjustLighting();
 
     }
 
     Across prePlayerDirection = new Across(false, true, false, false, false);
     void MovePlayer()
     {
-        if (Input.GetKeyDown(KeyCode.X)) { InitTiles(GameData.BaseStageName); return; }
+        if (Input.GetKeyDown(KeyCode.X)) { InitGame(GameData.BaseStageName); return; }
         if (Input.GetKeyDown(KeyCode.Z)) { ToggleHidePlayer(); return; }
         if (!LerpPlayer.LerpFinished) return;
         int dx = Input.GetKey(KeyCode.RightArrow) ? 1 :
@@ -323,7 +327,7 @@ public class StageManager : IkadaCore
         if (CurrentMode == PlayMode.Story)
         {
             GameData.CurrentStageIndex++;
-            InitTiles(GameData.BaseStageName);
+            InitGame(GameData.BaseStageName);
         }
         else if (CurrentMode == PlayMode.Edit)
             Application.LoadLevel("StageEdit");

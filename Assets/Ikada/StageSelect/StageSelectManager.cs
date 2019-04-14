@@ -41,9 +41,6 @@ public class StageSelectManager : MonoBehaviour
             var floor = Instantiate(WallTile, GetPositionFromPuzzlePosition(i, h / 2) + WallFloorDiffVec, new Quaternion()) as TileObject;
             floor.transform.SetParent(Stage.transform);
         }
-        px = CurrentTile;
-        py = h / 2;
-        Player.transform.position = GetPositionFromPuzzlePosition(px, py);
     }
     protected void SetUp()
     {
@@ -59,6 +56,9 @@ public class StageSelectManager : MonoBehaviour
             if (!alreadyStageSelected) Application.LoadLevel("SceneSelect");
         });
         InitTiles();
+        px = CurrentTile;
+        py = h / 2;
+        Player.transform.position = GetPositionFromPuzzlePosition(px, py);
         LerpPlayer.Init(true);
         SetUI();
     }
@@ -88,6 +88,7 @@ public class StageSelectManager : MonoBehaviour
         LerpPlayer.Position = GetPositionFromPuzzlePosition(px, py);
         CurrentTile = px;
         SetUI();
+        Atmosphere.AdjustLighting();
     }
 
     void SetUI()

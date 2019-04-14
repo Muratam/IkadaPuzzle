@@ -23,7 +23,7 @@ public class EditStageManager : IkadaCore
     InputField WriteInput;
     EditableTileObject EditTile;
 
-    void FileListOpen()
+    void OpenFileList()
     {
         FileList.transform.parent.gameObject.SetActive(true);
         foreach (var c in FileList.GetComponentsInChildren<Button>()) { if (c.gameObject.name == "temp") Destroy(c.gameObject); }
@@ -37,14 +37,14 @@ public class EditStageManager : IkadaCore
             fe.GetComponent<Button>().onClick.AddListener(() =>
             {
                 InitTiles(f);//"IkadaData/" + f);
-                FileListClose();
+                CloseFileList();
             });
         });
         FileList.GetComponent<RectTransform>().sizeDelta =
             new Vector2(FileList.GetComponent<RectTransform>().sizeDelta.x,
                         Mathf.Max(72 * (files.Length + 1) * 1.3f, 72 * 1.3f * 9));
     }
-    void FileListClose()
+    void CloseFileList()
     {
         FileList.transform.parent.gameObject.SetActive(false);
     }
@@ -64,10 +64,10 @@ public class EditStageManager : IkadaCore
     {
         FileList = GameObject.Find("FileList");
         FileElm = GameObject.Find("FileList/FileElm");
-        FileElm.GetComponent<Button>().onClick.AddListener(() => { FileListClose(); });
+        FileElm.GetComponent<Button>().onClick.AddListener(() => { CloseFileList(); });
         WriteInput = GameObject.Find("WriteInput").GetComponent<InputField>();
         MessageUI = GameObject.Find("Message").GetComponent<TransitionUI>(); MessageUI.gameObject.SetActive(false);
-        GameObject.Find("Read").GetComponent<Button>().onClick.AddListener(() => { FileListOpen(); });
+        GameObject.Find("Read").GetComponent<Button>().onClick.AddListener(() => { OpenFileList(); });
         GameObject.Find("Write").GetComponent<Button>().onClick.AddListener(() =>
         {
             EditStageData.Current.StageMap = StageMapUtil.TileObjsToString(Tiles);
